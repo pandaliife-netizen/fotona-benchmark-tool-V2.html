@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotona Benchmark Tool</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #111;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; right: 0;
+  width: 500px; height: 350px;
+  background: radial-gradient(ellipse at top right, rgba(180,0,0,0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 100px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.main-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* INTRO SCREEN */
+.intro-screen {
+  grid-column: 1 / -1;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.intro-card {
+  background: #1e1e1e;
+  border-radius: 20px;
+  padding: 56px 60px;
+  max-width: 680px;
+  width: 100%;
+  border: 1px solid #2a2a2a;
+}
+.intro-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #CC0000;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.intro-headline {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.intro-subtext {
+  font-size: 16px;
+  color: #aaa;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.intro-support {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 36px;
+  padding-left: 12px;
+  border-left: 2px solid #333;
+}
+.intro-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #CC0000;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 15px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+}
+.intro-cta:hover { background: #aa0000; transform: translateY(-1px); }
+
+/* HEADER CARD */
+.header-card {
+  background: #1e1e1e;
+  border-radius: 18px;
+  padding: 26px 30px 22px;
+  border: 1px solid #2a2a2a;
+}
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.tool-badge {
+  background: #fff;
+  color: #111;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.step-label {
+  color: #666;
+  font-size: 14px;
+}
+.path-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.path-badge.fotona { background: rgba(204,0,0,0.15); color: #ff6666; border: 1px solid rgba(204,0,0,0.3); }
+.path-badge.competition { background: rgba(100,140,200,0.15); color: #7aabdf; border: 1px solid rgba(100,140,200,0.3); }
+
+.header-title {
+  font-size: clamp(22px, 3.5vw, 34px);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.header-subtitle {
+  color: #999;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.header-tip {
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 4px;
+}
+.header-tip::before { content: '💡'; font-style: normal; font-size: 11px; }
+
+/* PROGRESS BAR */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+.progress-step:first-child { flex: 0 0 auto; align-items: flex-start; }
+.progress-step:last-child  { flex: 0 0 auto; align-items: flex-end; }
+.progress-connector {
+  flex: 1;
+  height: 1px;
+  background: #333;
+  margin-top: -15px;
+  z-index: 0;
+  transition: background 0.3s;
+}
+.progress-connector.active { background: #CC0000; }
+.step-circle {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #252525;
+  border: 1px solid #444;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.step-circle.active {
+  width: 34px; height: 34px;
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+}
+.step-circle.done {
+  background: #CC0000;
+  color: #fff;
+  border-color: #CC0000;
+}
+.step-name {
+  font-size: 10px;
+  color: #444;
+  margin-top: 6px;
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.step-name.active { color: #fff; font-weight: 700; font-size: 11px; }
+.step-name.done { color: #888; }
+
+/* CONTENT CARD */
+.content-card {
+  background: #1e1e1e;
+  border-radius: 18px;
+  padding: 28px 30px;
+  border: 1px solid #2a2a2a;
+}
+.content-card h2 {
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.card-sub { color: #999; font-size: 14px; margin-bottom: 4px; }
+.card-tip {
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+}
+.card-tip::before { content: '💡'; font-style: normal; font-size: 11px; margin-top: 1px; }
+
+/* SELECTION GRID */
+.selection-grid { display: grid; gap: 12px; }
+.selection-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.selection-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.selection-grid.cols-auto { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+
+.sel-card {
+  background: #222;
+  border: 1.5px solid #333;
+  border-radius: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  text-align: left;
+  position: relative;
+}
+.sel-card:hover { border-color: #555; background: #272727; transform: translateY(-1px); }
+.sel-card.selected {
+  border-color: #CC0000;
+  background: rgba(204,0,0,0.1);
+}
+.sel-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 20px; height: 20px;
+  background: #CC0000;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 20px;
+  text-align: center;
+}
+.sel-card .card-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.badge-foundation { background: rgba(100,160,100,0.2); color: #7dba7d; border: 1px solid rgba(100,160,100,0.3); }
+.badge-advanced    { background: rgba(100,140,200,0.2); color: #7aabdf; border: 1px solid rgba(100,140,200,0.3); }
+.badge-elite       { background: rgba(200,169,110,0.2); color: #c8a96e; border: 1px solid rgba(200,169,110,0.3); }
+.badge-entry-mid   { background: rgba(150,120,180,0.2); color: #b89fd4; border: 1px solid rgba(150,120,180,0.3); }
+
+.sel-card .card-title { font-weight: 700; font-size: 16px; margin-bottom: 4px; color: #fff; }
+.sel-card .card-desc  { font-size: 13px; color: #777; line-height: 1.45; }
+.sel-card .card-meta  { font-size: 11px; color: #555; margin-top: 5px; font-style: italic; }
+.sel-card .card-use   { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.4; border-top: 1px solid #2e2e2e; padding-top: 8px; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  color: #444; text-transform: uppercase; margin-bottom: 8px;
+}
+
+/* RESULT FRAMING HEADER */
+.result-header {
+  background: linear-gradient(135deg, rgba(204,0,0,0.12) 0%, rgba(204,0,0,0.04) 100%);
+  border: 1px solid rgba(204,0,0,0.25);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.result-header-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.result-header-text h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.result-header-text p {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.5;
+}
+.result-header-text .result-meta {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.result-meta span { display: flex; align-items: center; gap: 4px; }
+.result-meta span::before { content: '·'; color: #444; }
+.result-meta span:first-child::before { display: none; }
+
+/* TABLE */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 500px;
+}
+thead tr { border-bottom: 1px solid #333; }
+th {
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: #777;
+  white-space: nowrap;
+  background: #1e1e1e;
+  text-transform: uppercase;
+}
+th.fotona-th {
+  color: #fff;
+  background: rgba(204,0,0,0.12);
+  border-bottom: 2px solid #CC0000;
+}
+td {
+  padding: 12px 14px;
+  vertical-align: top;
+  color: #bbb;
+  border-bottom: 1px solid #262626;
+  line-height: 1.45;
+}
+tr:last-child td { border-bottom: none; }
+td.attr-label {
+  font-weight: 700;
+  color: #888;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: 130px;
+}
+td.fotona-td {
+  color: #fff;
+  font-weight: 500;
+  background: rgba(204,0,0,0.06);
+  border-left: 2px solid rgba(204,0,0,0.4);
+}
+tr:hover td { background: rgba(255,255,255,0.02); }
+tr:hover td.fotona-td { background: rgba(204,0,0,0.1); }
+
+/* BATTLECARD */
+.battlecard {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+.battlecard-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  background: #1e1e1e;
+  transition: background 0.1s;
+}
+.battlecard-row:hover { background: #222; }
+.battlecard-label {
+  padding: 14px 18px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+  border-right: 1px solid #2a2a2a;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 16px;
+}
+.battlecard-value {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.55;
+}
+.battlecard-row.highlight .battlecard-label { color: #CC0000; }
+.battlecard-row.highlight .battlecard-value { color: #fff; font-weight: 500; }
+.battlecard-row.fotona-rec .battlecard-label { color: #7aabdf; }
+.battlecard-row.fotona-rec .battlecard-value { color: #fff; font-weight: 600; font-size: 14px; }
+
+/* SPEC CARD */
+.spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.spec-item {
+  background: #222;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid #2e2e2e;
+}
+.spec-item.full-width { grid-column: 1 / -1; }
+.spec-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #555;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.spec-value { font-size: 14px; color: #ddd; line-height: 1.5; }
+.best-fit-box {
+  background: rgba(204,0,0,0.07);
+  border: 1px solid rgba(204,0,0,0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  grid-column: 1 / -1;
+}
+.best-fit-box .spec-label { color: #CC0000; }
+.best-fit-box .spec-value { color: #fff; font-size: 14px; font-weight: 500; }
+
+/* BULLETS */
+.cell-bullets { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.cell-bullets li { display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
+.cell-bullets li::before { content: '•'; color: #CC0000; font-size: 14px; line-height: 1.35; flex-shrink: 0; }
+
+/* VIEW ICON */
+.view-icon { font-size: 22px; margin-bottom: 8px; }
+
+/* SIDEBAR */
+.sidebar-col { position: sticky; top: 24px; }
+.summary-card {
+  background: #1a1a1a;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid #CC0000;
+}
+.summary-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 3px; color: #fff; }
+.summary-hint { color: #555; font-size: 12px; margin-bottom: 18px; }
+.summary-empty { color: #444; font-size: 13px; text-align: center; line-height: 1.6; padding: 16px 0; }
+.summary-item { margin-bottom: 12px; }
+.summary-item .s-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #555; text-transform: uppercase; margin-bottom: 3px; }
+.summary-item .s-value { font-size: 13px; color: #ddd; font-weight: 500; }
+.summary-divider { height: 1px; background: #252525; margin: 14px 0; }
+.summary-highlight {
+  background: rgba(204,0,0,0.07);
+  border: 1px solid rgba(204,0,0,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+.summary-highlight .s-label { color: #CC0000; }
+.summary-highlight .s-value { color: #fff; font-size: 12px; line-height: 1.5; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 50;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(17,17,17,0.95) 60%, transparent);
+}
+.bottom-nav button {
+  pointer-events: all;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1.5px solid #333;
+  background: #1e1e1e;
+  color: #888;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.bottom-nav button:hover { border-color: #666; color: #fff; }
+.bottom-nav button.disabled { opacity: 0.25; pointer-events: none; }
+.bottom-nav .btn-next.ready { background: #1e1e1e; color: #fff; border-color: #555; }
+
+/* FADE */
+.fade-in { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.hidden { display: none !important; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; padding-bottom: 90px; }
+  .sidebar-col { display: none; }
+  .intro-screen { min-height: 70vh; }
+  .intro-card { padding: 36px 28px; }
+  .selection-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+  .spec-grid { grid-template-columns: 1fr; }
+  .spec-item.full-width, .best-fit-box { grid-column: auto; }
+  .battlecard-row { grid-template-columns: 140px 1fr; }
+}
+@media (max-width: 560px) {
+  .header-card, .content-card { padding: 18px; }
+  .selection-grid.cols-2, .selection-grid.cols-3 { grid-template-columns: 1fr; }
+  .step-name { display: none; }
+  table { font-size: 12px; }
+  th, td { padding: 9px 10px; }
+  .battlecard-row { grid-template-columns: 1fr; }
+  .battlecard-label { border-right: none; border-bottom: 1px solid #2a2a2a; padding-bottom: 4px; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- Filled dynamically -->
+</div>
+<div class="bottom-nav" id="bottomNav" style="display:none">
+  <button class="btn-back disabled" id="btnBack" onclick="goBack()">← Back</button>
+  <button class="btn-next disabled" id="btnNext" onclick="goNext()">Next →</button>
+</div>
+<script>
+// ─── ATTRS ───────────────────────────────────
+const DENTAL_ATTRS = ['Modality / Wavelength','Key Indications','Hard Tissue Capability','Anesthesia Requirement','Clinical Versatility','Consumable Cost','Pricing Tier'];
+const AESTH_ATTRS  = ['Modality / Wavelength','Key Indications','Treatment Categories Covered','Downtime / Patient Comfort','Skin Type Safety','Consumable Cost','Pricing Tier','Target Buyer / Practice Type'];
+
+// ─── DEVICES ─────────────────────────────────
+const DENTAL_DEVICES = [
+  { id:'lw-ste',   name:'LightWalker® STE Pro Plus II', tier:'Foundation', desc:'Er:YAG hard and soft tissue, perio, hygiene, endo', modality:'Er:YAG 2940nm' },
+  { id:'skypulse', name:'SkyPulse®',                   tier:'Foundation', desc:'Endo-focused: irrigation, debridement, canal cleaning', modality:'Er:YAG + SWEEPS®' },
+  { id:'lw-ii',    name:'LightWalker® II',              tier:'Advanced',   desc:'Dual-wavelength full dental + facial aesthetic crossover', modality:'Er:YAG + Nd:YAG' },
+  { id:'lw-max',   name:'LightWalker® MAX',             tier:'Elite',      desc:'Full dental + Fotona4D® aesthetic crossover, 30+ indications', modality:'Er:YAG + Nd:YAG + full pulse suite' },
+];
+const AESTH_DEVICES = [
+  { id:'xs-dyn',    name:'XS Dynamis',                  tier:'Foundation', desc:'Er:YAG resurfacing, soft tissue surgery, GYN', modality:'Er:YAG 2940nm' },
+  { id:'xp-dyn',    name:'XP Dynamis',                  tier:'Foundation', desc:'Nd:YAG hair removal, vascular, skin rejuvenation', modality:'Nd:YAG 1064nm' },
+  { id:'tw-intima', name:'TimeWalker® IntimaLaser',     tier:'Advanced',   desc:'Dual-wavelength skin resurfacing, GYN, vascular, pain', modality:'Er:YAG + Nd:YAG dual-wavelength' },
+  { id:'tw-4d',     name:'TimeWalker® Fotona4D® Pro',   tier:'Advanced',   desc:'Full facial rejuvenation platform, 4D protocols', modality:'Er:YAG + Nd:YAG full pulse suite' },
+  { id:'sp-pro',    name:'SP Dynamis Pro',              tier:'Elite',      desc:'50+ FDA cleared applications, full aesthetic platform', modality:'Er:YAG + Nd:YAG + QCW + TURBO' },
+  { id:'dyn-max',   name:'Dynamis MAX',                 tier:'Elite',      desc:'100+ treatment options, CoolMist™ integrated cooling', modality:'Er:YAG + Nd:YAG full suite' },
+  { id:'sw-maqx',   name:'StarWalker® MaQX',           tier:'Elite',      desc:'14 modalities, Q-switched tattoo, pigment, FracTAT®', modality:'Nd:YAG + 532nm + 585nm + 650nm' },
+  { id:'sw-pqx',    name:'StarWalker® PQX',            tier:'Elite',      desc:'Highest pico power, 2.7GW peak, multi-color tattoo', modality:'Picosecond Nd:YAG, 300ps, 2.7GW' },
+  { id:'starformer',name:'StarFormer®',                 tier:'Entry-Mid',  desc:'HIMS muscle stimulation, body contouring, pelvic floor', modality:'High Intensity Magnetic Stimulation' },
+];
+const STARFORMER_NO_LINEUP = true;
+const VIEWS = [
+  { id:'vs-comp',   name:'Compare vs Market',              icon:'⚔️', desc:'Compare this device against key market competitors.', use:'Use when a prospect is evaluating Fotona against a competing brand.' },
+  { id:'vs-lineup', name:'Compare Within Fotona Portfolio', icon:'📊', desc:'See how this device sits within the Fotona lineup.',   use:'Use when helping a prospect understand which Fotona device fits their needs.' },
+  { id:'standalone',name:'Quick Device Overview',          icon:'🔍', desc:'Clean spec card for just this device.',               use:'Use for a fast overview in a live conversation or leave-behind.' },
+];
+// ─── COMPETITOR BRANDS ───────────────────────
+const DENTAL_COMPETITORS = [
+  { id:'biolase',    name:'Biolase',           desc:'Er,Cr:YSGG all-tissue dental laser platform', modality:'Er,Cr:YSGG 2780nm, Diode 940nm' },
+  { id:'denmat',     name:'DenMat',            desc:'Entry diode soft tissue laser', modality:'Diode 810nm' },
+  { id:'amd',        name:'AMD Lasers',        desc:'Entry diode soft tissue and hygiene', modality:'Diode 810–980nm' },
+  { id:'ultradent',  name:'Ultradent',         desc:'Dual-wavelength diode, soft tissue and PBM', modality:'Dual diode 810nm + 980nm' },
+  { id:'periolase',  name:'PerioLase',         desc:'Nd:YAG periodontal specialist system', modality:'Nd:YAG 1064nm' },
+  { id:'convergent', name:'Convergent Dental', desc:'CO₂ all-tissue anesthesia-free platform', modality:'CO₂ 9.3μm' },
+  { id:'deka',       name:'DEKA',              desc:'CO₂ and Nd:YAG soft tissue dental systems', modality:'CO₂ 10,600nm + Nd:YAG' },
+  { id:'dentsply',   name:'Dentsply Sirona',   desc:'Triple-wavelength diode, DSO and GP focused', modality:'Diode 445nm + 970nm + 660nm' },
+  { id:'lightscalpel',name:'LightScalpel',     desc:'CO₂ specialist: TOTS, frenectomy, sleep dentistry', modality:'CO₂ 10,600nm' },
+  { id:'bienair',    name:'Bien-Air',          desc:'Electric micromotor implantology, no laser', modality:'Electric micromotor, rotary only' },
+];
+const AESTH_COMPETITORS = [
+  { id:'cartessa',   name:'Cartessa',          desc:'Multi-platform distributor, broad aesthetics coverage', modality:'CO₂, Alexandrite, RF, IPL, picosecond' },
+  { id:'cynosure',   name:'Cynosure Lutronic', desc:'Broad energy-based portfolio post-merger', modality:'RF, Alexandrite, Nd:YAG, CO₂, picosecond' },
+  { id:'btl',        name:'BTL',               desc:'HIFEM body contouring and facial RF platforms', modality:'HIFEM, RF, ultrasound, electromagnetic' },
+  { id:'sofwave',    name:'Sofwave',           desc:'Ultrasound skin tightening and muscle activation', modality:'SUPERB ultrasound, plyometric muscle activation' },
+  { id:'candela',    name:'Candela',           desc:'Multi-device hair, pigment, vascular, tattoo', modality:'Alexandrite, Nd:YAG, picosecond, IPL, PDL' },
+  { id:'lumenis',    name:'Lumenis',           desc:'Full-service IPL, CO₂, Alexandrite, RF platform', modality:'IPL XPL, Alexandrite, CO₂, RF, fractional' },
+  { id:'jeisys',     name:'Jeisys',            desc:'RF microneedling and CO₂ mid-market entry', modality:'RF microneedling, bipolar RF, CO₂' },
+  { id:'aerolase',   name:'Aerolase',          desc:'1064nm and Er:YAG skin-type inclusive platform', modality:'Nd:YAG 1064nm, Er:YAG 2940nm, 308nm excimer' },
+  { id:'amp',        name:'AMP Lasers',        desc:'RF microneedling and biotherapy bundled model', modality:'RF microneedling, plasma, hydrodermabrasion' },
+  { id:'cutera',     name:'Cutera',            desc:'Multi-category aesthetics: acne, body, skin', modality:'1726nm, CO₂, RF microneedling, Nd:YAG, EMS' },
+  { id:'sciton',     name:'Sciton',            desc:'Premium Er:YAG, BBL, hybrid fractional platform', modality:'Er:YAG, Nd:YAG, BBL, hybrid fractional 1470nm' },
+  { id:'inmode',     name:'InMode',            desc:'RF microneedling, body contouring, GYN wellness', modality:'RF microneedling, RFAL, bipolar RF, IPL, diode' },
+  { id:'alma',       name:'Alma Lasers',       desc:'Broad mid-tier multi-platform aesthetics', modality:'Diode, CO₂, RF microneedling, ultrasound, lipolysis' },
+  { id:'solta',      name:'Solta Medical',     desc:'Premium RF tightening and fractional resurfacing', modality:'Monopolar RF, fractional 1550nm + 1927nm, ultrasound' },
+];
+// ─── COMPETITOR BATTLECARDS ──────────────────
+const COMPETITOR_BATTLECARDS = {
+  biolase:    { modality:'Er,Cr:YSGG 2780nm, Diode 940nm', indications:'All-tissue cutting, hard tissue prep, endo, perio, implant, restorative, whitening, hygiene, pain therapy', categories:'Hard tissue, soft tissue, perio, endo, hygiene, implant', pricing:'Entry-Mid (~$25K–$100K+)', targetBuyer:'GP, DSO, hygiene-driven practice, first-time laser buyer', weakness:'Chapter 11 bankruptcy October 2024, acquired by MegaGen November 2024, only ~99 employees, U.S. laser revenue declined from $6.3M to $3.6M, single Er,Cr:YSGG modality limits cross-specialty versatility, no facial aesthetic crossover', bestFotona:'LightWalker II, LightWalker MAX' },
+  denmat:     { modality:'Diode 810nm, 3W continuous, 5W pulse max', indications:'Soft tissue surgery, hygiene, perio adjunct, whitening, general soft tissue management', categories:'Soft tissue only', pricing:'Entry (~$5K–$20K+)', targetBuyer:'GP, first-time laser buyer, budget-conscious practice', weakness:'Single diode modality, no hard tissue capability, no endo capability, no facial aesthetic crossover, minimal clinical depth, limited revenue expansion beyond basic soft tissue', bestFotona:'LightWalker STE Pro Plus II' },
+  amd:        { modality:'Diode 810–980nm', indications:'Soft tissue cutting, contouring, hemostasis, hygiene adjunct, perio, pain therapy', categories:'Soft tissue only', pricing:'Entry (~$3,785–$8,112)', targetBuyer:'GP, hygienist, first-step laser adopter, budget-driven practice', weakness:'Very small company (~19–25 employees, ~$5.3M revenue), single diode modality, no hard tissue capability, no endo capability, no facial aesthetic crossover, minimal R&D since March 2024 rebrand', bestFotona:'LightWalker STE Pro Plus II' },
+  ultradent:  { modality:'Dual-wavelength diode 810nm, 980nm, 100W peak super-pulsed', indications:'Soft tissue surgery, hygiene adjunct, sulcular debridement, perio, frenectomy, whitening, PBM therapy', categories:'Soft tissue, hygiene, PBM', pricing:'Entry (~$5K–$15K+)', targetBuyer:'GP, hygiene-focused practice, first-time laser buyer', weakness:'Diode only, no hard tissue or Er:YAG capability, no endo capability, no facial aesthetic crossover, limited clinical depth for specialist workflows', bestFotona:'LightWalker STE Pro Plus II, LightWalker II' },
+  periolase:  { modality:'Nd:YAG 1064nm, 6W free-running variable pulsed, 7 pulse durations', indications:'Periodontal disease (LANAP®), peri-implantitis (LAPIP™), implant integration (BLAST™), value-added soft and hard tissue procedures', categories:'Perio only, implant adjunct', pricing:'Mid (~$70K–$120K+, ~$1,374/month lease)', targetBuyer:'Periodontist, GP seeking perio profit center, implant-focused practice', weakness:'Single-protocol dependency, no hard tissue, esthetic, or general dentistry versatility, requires 5-day certification, very small company (~11–50 employees), no facial aesthetic crossover', bestFotona:'LightWalker II, SkyPulse®' },
+  convergent: { modality:'CO₂ 9.3μm', indications:'Cavity prep, restorative, soft tissue surgery, hygiene, osseous surgery, pediatric, TOTS, implants, cosmetic, Perioguide™ suture-free perio therapy', categories:'All-tissue, hard tissue, soft tissue, perio, hygiene, pediatric', pricing:'Premium (~$75K–$120K+)', targetBuyer:'GP, DSO, hygiene-driven practice, pediatric dentist, anesthesia-free positioning buyer', weakness:'Single CO₂ platform, no dual-wavelength capability, no facial aesthetic crossover, dependent on GP and hygiene segments for growth, limited international footprint', bestFotona:'LightWalker II, LightWalker MAX' },
+  deka:       { modality:'CO₂ 10,600nm RF-excited ultrapulsed, Nd:YAG 1064nm', indications:'Soft tissue surgery, perio, endo adjunct, oral surgery, implantology, hygiene, general dentistry', categories:'Soft tissue, perio, endo adjunct, oral surgery, implantology', pricing:'Mid (~$60K–$120K+)', targetBuyer:'GP, periodontist, oral surgeon, specialist seeking CO₂ soft tissue precision', weakness:'Single-wavelength systems require multiple device purchases for full coverage, CO₂ requires higher technique proficiency, no facial aesthetic crossover, distributor-led with inconsistent support', bestFotona:'LightWalker II, SkyPulse®' },
+  dentsply:   { modality:'Triple-wavelength diode 445nm, 970nm, 660nm; dual-wavelength 970nm, 660nm', indications:'Soft tissue surgery, perio, endo adjunct, implantology, hygiene, PBM, whitening, pain therapy', categories:'Soft tissue, perio, endo adjunct, hygiene, PBM', pricing:'Entry-Mid (~$10K–$25K)', targetBuyer:'GP, DSO, dental school, practice already in Dentsply equipment ecosystem', weakness:'Diode only, no hard tissue or Er:YAG capability, no endo capability beyond adjunct, no facial aesthetic crossover, bundled OEM positioning, dealer-dependent', bestFotona:'LightWalker II, LightWalker STE Pro Plus II' },
+  lightscalpel:{ modality:'CO₂ 10,600nm, super-pulse, continuous wave and pulsed modes', indications:'Soft tissue surgery, frenectomy, tongue-tie, TOTS, periodontics, implantology, sleep dentistry, crown lengthening, pediatric', categories:'Soft tissue, frenectomy, TOTS, perio, implant adjunct, sleep, pediatric', pricing:'Mid (~$35K–$80K)', targetBuyer:'Oral surgeon, pediatric dentist, TOTS and frenectomy specialist, sleep dentistry practice', weakness:'CO₂ soft tissue only, no hard tissue capability, no endo capability, no facial aesthetic crossover, very small company (~25–30 employees, ~$2M revenue), limited international distribution', bestFotona:'LightWalker II, LightWalker MAX' },
+  bienair:    { modality:'Electric micromotor, iPad-controlled digital implantology, precision rotary tools, no laser', indications:'Implantology, restorative, endodontic, oral surgery, guided surgery, multi-specialty dentistry', categories:'Implantology, restorative, endo, oral surgery, no laser procedures', pricing:'Premium (~$6K–$25K per system)', targetBuyer:'Implantologist, oral surgeon, restorative-focused GP, esthetic-forward dental practice', weakness:'No laser platform whatsoever, purely mechanical and rotary, no energy-based treatment capability, no facial aesthetic crossover', bestFotona:'LightWalker MAX' },
+  cartessa:   { modality:'Fractional CO₂, CO₂ + 1570nm hybrid, Alexandrite + Nd:YAG, monopolar RF, hybrid RFMN, IPL + RF + EMS, picosecond, laser lipolysis, aqua-delivery', indications:'Resurfacing, hair removal, tightening, body contouring, pigment and tattoo removal, facial rejuvenation', categories:'Skin, hair, body, vascular, pigment, tattoo', pricing:'Entry-Premium (~$40K–$150K+ depending on platform)', targetBuyer:'Med-spa, dermatology, plastic surgery group seeking differentiated branded platforms', weakness:'Distributor model limits control over technology development, heavy reliance on DEKA creates manufacturer concentration risk, consumable costs across several platforms, lower clinical research depth vs OEM competitors', bestFotona:'SP Dynamis Pro, StarWalker MaQX' },
+  cynosure:   { modality:'Multifrequency monopolar RF, RF microneedling, 755nm Alexandrite, 1064nm Nd:YAG, picosecond, fractional CO₂, 1550nm fractional, non-ablative laser', indications:'Hair removal, skin tightening, resurfacing, pigmentation, tattoo removal, body contouring, vascular', categories:'Skin, hair, body, vascular, pigment, tattoo, tightening', pricing:'Mid-Premium (~$80K–$250K+)', targetBuyer:'Dermatologist, plastic surgeon, high-volume med-spa seeking broad energy-based coverage', weakness:'Portfolio integration still evolving post-merger, brand identity less unified, several platforms carry consumable costs, some legacy systems aging, complex portfolio creates inconsistent sales messaging', bestFotona:'SP Dynamis Pro, StarWalker MaQX, XP Dynamis' },
+  btl:        { modality:'HIFEM®, synchronized RF, monopolar RF, ultrasound, fractional RF microneedling, electromagnetic stimulation', indications:'Body contouring, muscle toning, facial lifting, skin tightening, cellulite, pelvic health, pain relief', categories:'Body, muscle, face, pelvic floor, wellness', pricing:'Premium (~$150K–$250K+ per platform)', targetBuyer:'Med-spa, cash-pay practice, high-throughput body and face volume practice', weakness:'Single-indication platforms require multiple device purchases for full coverage, high total cost of ownership due to consumables and cycle cards, limited clinical depth vs multi-modality laser competitors, heavy reliance on consumer marketing', bestFotona:'SP Dynamis Pro, Dynamis MAX, StarFormer® (vs EMSCULPT NEO and EMSELLA)' },
+  sofwave:    { modality:'SUPERB™ ultrasound mid-dermal, plyometric muscle activation (PureImpact VIP)', indications:'Skin tightening, wrinkle reduction, brow and neck lifting, acne scars, cellulite, upper arm laxity, muscle toning', categories:'Skin tightening, lifting, body toning', pricing:'Premium (~$120K–$180K+)', targetBuyer:'Dermatology, plastic surgery, high-end practices focused on facial rejuvenation and non-invasive lifting', weakness:'Two-platform portfolio limits coverage, consumable-driven model increases long-term ownership cost, limited versatility compared to laser-based platforms', bestFotona:'SP Dynamis Pro, TimeWalker Fotona4D Pro' },
+  candela:    { modality:'755nm Alexandrite, Nd:YAG, picosecond, IPL, pulsed dye laser 595nm, RF microneedling, hydrodermabrasion', indications:'Hair removal, pigmentation, vascular, tattoo removal, skin resurfacing, rejuvenation, acne scars', categories:'Hair, skin, pigment, tattoo, vascular', pricing:'Premium (~$120K–$250K+)', targetBuyer:'Dermatologist, plastic surgeon, high-end aesthetic practice seeking multi-device coverage', weakness:'Multi-device ecosystem increases total capital investment, portfolio fragmentation raises operational complexity, perceived as legacy brand, slower innovation cadence', bestFotona:'StarWalker MaQX, XP Dynamis, SP Dynamis Pro' },
+  lumenis:    { modality:'IPL XPL™, Alexandrite + Nd:YAG BLEND X®, CO₂ laser, RF, RF microneedling, DMR facial stimulation, fractional laser', indications:'Hair removal, skin rejuvenation, pigmentation, vascular, resurfacing, body contouring, hair loss, women\'s health', categories:'Hair, skin, vascular, pigment, body, resurfacing, women\'s health', pricing:'Premium (~$100K–$250K+)', targetBuyer:'Dermatology, plastic surgery, multi-device aesthetic practice seeking proven full-service solutions', weakness:'Portfolio fragmentation requires multiple devices for full coverage, mixed modality approach reduces per-system differentiation, high total capital investment, perceived as legacy brand in some categories', bestFotona:'SP Dynamis Pro, StarWalker PQX, TimeWalker Fotona4D Pro' },
+  jeisys:     { modality:'RF microneedling mono and bipolar 1MHz + 2MHz, dual-mode monopolar + bipolar RF, fractional CO₂', indications:'Skin tightening, collagen remodeling, resurfacing, acne and scars, wrinkle reduction, topical infusion', categories:'Skin tightening, resurfacing, scar, pigment', pricing:'Mid (~$60K–$150K+)', targetBuyer:'Med-spa, price-sensitive practice, first-time RF microneedling buyer', weakness:'Limited brand recognition in premium U.S. dermatology and plastics segments, distributor reliance creates inconsistent customer experience, narrow three-platform U.S. portfolio, less clinical depth and published validation', bestFotona:'SP Dynamis Pro, TimeWalker Fotona4D Pro' },
+  aerolase:   { modality:'1064nm Nd:YAG 650-microsecond pulse, 2940nm Er:YAG 300-microsecond pulse, 308nm excimer', indications:'Acne, rosacea, pigmentation, vascular, hair removal, resurfacing, scars, autoimmune, psoriasis, PFB', categories:'Skin, hair, vascular, pigment, medical dermatology', pricing:'Mid (~$70K–$150K+)', targetBuyer:'Dermatology, diverse market med-spa, practice prioritizing skin-type inclusivity and high-margin treatments', weakness:'Single wavelength per device limits multi-wavelength protocol versatility, outcomes less robust for advanced resurfacing or surgical-level indications, perceived as mid-tier vs premium by high-end dermatology buyers', bestFotona:'SP Dynamis Pro, XP Dynamis' },
+  amp:        { modality:'RF microneedling, focused RF, plasma technology, hydrodermabrasion, PRP, exosomes, biotherapy serums', indications:'Skin tightening, resurfacing, acne and scars, hair loss, skin rejuvenation, PRP treatments, vascular', categories:'Skin, hair, body, vascular, biotherapy', pricing:'Below premium OEM pricing, biotherapy consumable model', targetBuyer:'Med-spa, dermatology practice seeking differentiated devices with turnkey business support and bundled biotherapy', weakness:'Distributor model limits control over technology development, no proprietary device manufacturing, limited brand recognition vs established OEM laser companies, less clinical depth and published validation', bestFotona:'SP Dynamis Pro, TimeWalker Fotona4D Pro' },
+  cutera:     { modality:'1726nm acne laser, fractional CO₂, RF microneedling, 532nm and 1064nm Nd:YAG, monopolar RF, EMS, IPL + laser', indications:'Acne, body contouring, muscle toning, skin resurfacing, vascular, pigmentation, hair removal, tattoo removal', categories:'Skin, body, hair, vascular, pigment, tattoo, acne', pricing:'Mid-Premium (~$80K–$200K+)', targetBuyer:'Multi-category aesthetic practice, med-spa seeking flexible entry points across skin and body', weakness:'Chapter 11 bankruptcy March 2025, emerged private May 2025 after $400M debt reduction, revenue declined to $138.5M in 2024, portfolio fragmentation, mixed brand perception in premium dermatology', bestFotona:'SP Dynamis Pro, TimeWalker Fotona4D Pro' },
+  sciton:     { modality:'Er:YAG, Nd:YAG, broadband light BBL, hybrid fractional 1470nm + 2940nm, non-ablative 1927nm', indications:'Skin resurfacing, vascular and pigment correction, hair removal, skin rejuvenation, body BBL treatments', categories:'Skin, hair, vascular, pigment, body', pricing:'Premium (~$130K–$300K+)', targetBuyer:'Core dermatologist, plastic surgeon, high-end physician-led aesthetic practice', weakness:'Limited scalability due to resource-intensive education-first model and high ASPs, low consumer brand awareness outside physician circles, concentrated portfolio limits broader device diversification', bestFotona:'SP Dynamis Pro, Dynamis MAX, TimeWalker Fotona4D Pro' },
+  inmode:     { modality:'RF microneedling bipolar and fractionated, RFAL minimally invasive, hands-free bipolar RF, EMS, IPL, 755nm, 810nm, 1064nm laser, diode hair removal', indications:'Skin tightening, fat remodeling, hair removal, pigmentation, women\'s wellness, body contouring, facial lifting', categories:'Skin, hair, body, women\'s wellness, face', pricing:'Mid-Premium (~$120K–$150K+)', targetBuyer:'Med-spa, hybrid clinic, cash-pay practice seeking fast ROI and strong consumer brand recognition', weakness:'Technology concentrated in RF limits versatility across laser-based and multi-wavelength procedures, consumable-dependent model increases long-term ownership costs, consumer-focused branding undercuts credibility with core physicians, revenue declined 20% in 2024', bestFotona:'SP Dynamis Pro, TimeWalker IntimaLaser, Dynamis MAX' },
+  alma:       { modality:'Diode, CO₂ + 1570nm hybrid, RF microneedling plasma RF, ultrasound + RF contouring, acoustic wave, laser lipolysis', indications:'Hair removal, resurfacing, tightening, contouring, pigmentation, hair loss, women\'s and men\'s wellness', categories:'Hair, skin, body, pigment, women\'s wellness, hair loss', pricing:'Mid (~$85K–$215K)', targetBuyer:'High-volume med-spa, multi-specialty clinic seeking versatile treatments across hair, skin, and body', weakness:'Mid-tier pricing and broad range dilutes premium brand perception, high SKU count increases sales and service complexity, marketing breadth may overshadow clinical differentiation in physician-driven segments', bestFotona:'SP Dynamis Pro, XP Dynamis, StarWalker MaQX' },
+  solta:      { modality:'Monopolar RF, fractional 1550nm + 1927nm lasers, gentle fractional 1440nm and 1927nm, ultrasound-assisted liposuction', indications:'Skin tightening, resurfacing, prejuvenation, body contouring, scar and pigment correction', categories:'Skin tightening, resurfacing, body contouring', pricing:'Premium (~$90K–$230K)', targetBuyer:'Premium clinic, dermatology, plastics prioritizing patient demand and strong brand recognition', weakness:'Aging product lineup reduces perceived innovation, focused four-device range restricts broader market adoption, slower R&D pace, consumable-dependent Thermage tips model increases long-term cost', bestFotona:'SP Dynamis Pro, TimeWalker Fotona4D Pro' },
+};
+// ─── COMPETITOR DEVICE MATRICES ─────────────
+const COMPETITOR_DEVICES = {
+  biolase: {
+    attrs: DENTAL_ATTRS,
+    devices: ['Epic X™','Epic Hygiene™','Waterlase MDX®','Waterlase iPlus™'],
+    rows: {
+      'Modality / Wavelength':  ['Diode 940nm','Diode 940nm','Er,Cr:YSGG 2780nm, diode','Er,Cr:YSGG 2780nm, diode'],
+      'Key Indications':        ['Soft tissue, whitening, hygiene, pain therapy','Hygiene, non-surgical perio, pain relief','All-tissue, endo, perio, hygiene, whitening','All-tissue, endo, perio, implant, hygiene, whitening'],
+      'Hard Tissue Capability': ['None','None','Full Er,Cr:YSGG','Full Er,Cr:YSGG'],
+      'Anesthesia Requirement': ['Required for most','Required for most','Reduced for soft tissue','Reduced for soft tissue'],
+      'Clinical Versatility':   ['Soft tissue and hygiene only, no facial aesthetic crossover','Hygiene focused, no facial aesthetic crossover','Full all-tissue dental, no facial aesthetic crossover','Full all-tissue dental, premium flagship, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Medium, tips and accessories','Medium, tips','Medium, tips and fibers','Medium, tips and fibers'],
+      'Pricing Tier':           ['Entry (~$25K–$40K)','Entry (~$20K–$35K)','Mid (~$60K–$100K)','Mid-Premium (~$80K–$100K)'],
+    }
+  },
+  denmat: {
+    attrs: DENTAL_ATTRS,
+    devices: ['SOL® Desktop','SOL® Portable'],
+    rows: {
+      'Modality / Wavelength':  ['Diode 810nm, 3W continuous, 5W pulse','Diode 810nm, 3W continuous, 5W pulse'],
+      'Key Indications':        ['Soft tissue surgery, hygiene, perio adjunct, whitening','Soft tissue surgery, hygiene, perio adjunct, whitening'],
+      'Hard Tissue Capability': ['None','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most'],
+      'Clinical Versatility':   ['Soft tissue only, whole-team use, no facial aesthetic crossover','Soft tissue only, portable, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low','Low'],
+      'Pricing Tier':           ['Entry (~$5K–$10K)','Entry (~$5K–$10K)'],
+    }
+  },
+  amd: {
+    attrs: DENTAL_ATTRS,
+    devices: ['Picasso Clario','Picasso Lite+','Picasso+','Hygea','Precise LTM','Pioneer Elite'],
+    rows: {
+      'Modality / Wavelength':  ['Diode 810–980nm','Diode 810–980nm','Diode 810–980nm','Diode 810–980nm','Diode 810–980nm','Diode 810–980nm'],
+      'Key Indications':        ['Hygiene, soft tissue','Soft tissue, hygiene, perio','Soft tissue, contouring, hemostasis, perio','Hygiene focused','Soft tissue, pain therapy','Soft tissue, full procedure range'],
+      'Hard Tissue Capability': ['None','None','None','None','None','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most','Required for most','Required for most','Required for most','Required for most'],
+      'Clinical Versatility':   ['Hygiene entry, no facial aesthetic crossover','Hygiene and soft tissue, no facial aesthetic crossover','Full soft tissue range, no facial aesthetic crossover','Hygiene only, no facial aesthetic crossover','Soft tissue and pain, no facial aesthetic crossover','Full soft tissue, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low','Low','Low','Low','Low','Low'],
+      'Pricing Tier':           ['Entry (~$3,785)','Entry (~$5,407)','Entry (~$8,112)','Entry (~$5,407)','Entry (~$7,137)','Entry'],
+    }
+  },
+  ultradent: {
+    attrs: DENTAL_ATTRS,
+    devices: ['Gemini™ 810 + 980','Gemini EVO™'],
+    rows: {
+      'Modality / Wavelength':  ['Dual diode 810nm, 980nm, 20W peak','Dual diode 810nm, 980nm, 100W peak super-pulsed'],
+      'Key Indications':        ['Soft tissue surgery, hygiene, perio adjunct, frenectomy, whitening','Soft tissue surgery, hygiene adjunct, sulcular debridement, perio, frenectomy, whitening, PBM'],
+      'Hard Tissue Capability': ['None','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most'],
+      'Clinical Versatility':   ['Soft tissue, world\'s first dual-wavelength diode, no facial aesthetic crossover','Soft tissue, PBM, Wi-Fi dashboard ROI tracking, 16 presets, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, tips only','Low, tips only'],
+      'Pricing Tier':           ['Entry (~$5K–$10K)','Entry-Mid (~$8K–$15K)'],
+    }
+  },
+  periolase: {
+    attrs: DENTAL_ATTRS,
+    devices: ['PerioLase® MVP-7™'],
+    rows: {
+      'Modality / Wavelength':  ['Nd:YAG 1064nm, 6W free-running variable pulsed, 7 pulse durations'],
+      'Key Indications':        ['Periodontal disease (LANAP®), peri-implantitis (LAPIP™), implant integration (BLAST™), value-added soft and hard tissue'],
+      'Hard Tissue Capability': ['None'],
+      'Anesthesia Requirement': ['Reduced, LANAP protocol often performed without traditional anesthesia'],
+      'Clinical Versatility':   ['Perio and implant only, single-protocol system, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, fiber tips'],
+      'Pricing Tier':           ['Mid (~$70K–$120K+, ~$1,374/month lease)'],
+    }
+  },
+  convergent: {
+    attrs: DENTAL_ATTRS,
+    devices: ['Solea® CO₂ Laser','Solea® Perioguide™'],
+    rows: {
+      'Modality / Wavelength':  ['CO₂ 9.3μm, novel wavelength near peak hydroxyapatite absorption','CO₂ 9.3μm, periodontal application'],
+      'Key Indications':        ['Cavity prep, restorative, soft tissue surgery, hygiene, osseous surgery, pediatric, TOTS, implants, cosmetic','Suture-free periodontal therapy, minimally invasive perio'],
+      'Hard Tissue Capability': ['All-tissue CO₂','Soft tissue and osseous only'],
+      'Anesthesia Requirement': ['Anesthesia-free','Anesthesia-free'],
+      'Clinical Versatility':   ['All-tissue GP and hygiene focus, no facial aesthetic crossover','Perio therapy focused, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, minimal','Low, minimal'],
+      'Pricing Tier':           ['Premium (~$75K–$120K)','Add-on to Solea system'],
+    }
+  },
+  deka: {
+    attrs: DENTAL_ATTRS,
+    devices: ['SmartXide Ultraspeed2 CO₂','US-20D CO₂','SmartPerio Nd:YAG'],
+    rows: {
+      'Modality / Wavelength':  ['CO₂ 10,600nm RF-excited ultrapulsed','CO₂ 10,600nm','Nd:YAG 1064nm'],
+      'Key Indications':        ['Soft tissue surgery, perio, endo adjunct, oral surgery, implantology, general dentistry','Soft tissue surgery, perio, oral and maxillofacial surgery','Perio, endo adjunct, soft tissue'],
+      'Hard Tissue Capability': ['CO₂ soft tissue only','CO₂ soft tissue only','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most','Required for most'],
+      'Clinical Versatility':   ['Broad soft tissue, gold standard CO₂ speed and versatility, no facial aesthetic crossover','Established soft tissue workhorse, no facial aesthetic crossover','Perio and endo adjunct only, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low','Low','Low'],
+      'Pricing Tier':           ['Mid-Premium (~$80K–$120K)','Mid (~$60K–$90K)','Mid (~$60K–$80K)'],
+    }
+  },
+  dentsply: {
+    attrs: DENTAL_ATTRS,
+    devices: ['SiroLaser Blue','SiroLaser Advance Plus'],
+    rows: {
+      'Modality / Wavelength':  ['Triple-wavelength diode 445nm, 970nm, 660nm','Dual-wavelength diode 970nm, 660nm'],
+      'Key Indications':        ['Soft tissue surgery, perio, endo adjunct, implantology, hygiene, PBM, whitening, pain therapy','Soft tissue surgery, perio, endo adjunct, hygiene, PBM'],
+      'Hard Tissue Capability': ['None','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most'],
+      'Clinical Versatility':   ['20+ indications, first triple-wavelength dental diode, integrated into digital workflows, no facial aesthetic crossover','20+ indications, dual-wavelength diode, digital workflow integration, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Medium, bundled consumables','Medium, bundled consumables'],
+      'Pricing Tier':           ['Entry-Mid (~$15K–$25K)','Entry-Mid (~$10K–$20K)'],
+    }
+  },
+  lightscalpel: {
+    attrs: DENTAL_ATTRS,
+    devices: ['LS-1005','LS-2010'],
+    rows: {
+      'Modality / Wavelength':  ['CO₂ 10,600nm, super-pulse, continuous wave and pulsed, all-metal tube','CO₂ 10,600nm, super-pulse, continuous wave and pulsed, all-metal tube'],
+      'Key Indications':        ['Soft tissue surgery, frenectomy, TOTS, periodontics, implantology, sleep dentistry, crown lengthening, pediatric','Soft tissue surgery, frenectomy, TOTS, periodontics, implantology, oral surgery, crown lengthening'],
+      'Hard Tissue Capability': ['None','None'],
+      'Anesthesia Requirement': ['Required for most','Required for most'],
+      'Clinical Versatility':   ['Dental and medical soft tissue, entry CO₂, no facial aesthetic crossover','Dental and medical soft tissue, premium CO₂, highest power output, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, fiber tips','Low, fiber tips'],
+      'Pricing Tier':           ['Mid (~$35K–$55K)','Premium (~$60K–$80K)'],
+    }
+  },
+  bienair: {
+    attrs: DENTAL_ATTRS,
+    devices: ['MX2 / MX-i LED Micromotor','iChiropro Implantology System','PrimaCA','NOVA'],
+    rows: {
+      'Modality / Wavelength':  ['Electric micromotor, precision rotary','iPad-controlled digital implantology motor, MX-i LED','Electric contra-angle handpiece','Electric contra-angle handpiece'],
+      'Key Indications':        ['Restorative, endo, oral surgery, multi-specialty','Implantology, guided surgery, immediate loading, up to 8 simultaneous implants','Restorative, endo, surgical','Restorative, endo, multi-specialty'],
+      'Hard Tissue Capability': ['Rotary cutting only','Rotary implant placement only','Rotary cutting only','Rotary cutting only'],
+      'Anesthesia Requirement': ['Required, mechanical only','Required, mechanical only','Required, mechanical only','Required, mechanical only'],
+      'Clinical Versatility':   ['Broad rotary multi-specialty, no laser capability, no facial aesthetic crossover','Implantology specific, iPad-controlled digital workflow, no laser capability','Restorative and surgical, no laser capability','Restorative and endo focus, no laser capability'],
+      'Consumable Cost':        ['Medium, handpiece maintenance','Medium, handpiece and irrigation lines','Medium','Medium'],
+      'Pricing Tier':           ['Mid (~$8K–$15K)','Premium (~$15K–$25K)','Mid (~$6K–$12K)','Mid (~$6K–$12K)'],
+    }
+  },
+  cartessa: {
+    attrs: AESTH_ATTRS,
+    devices: ['Tetra PRO (CoolPeel®)','Helix','Motus PRO','Everesse','Quadessy','Toro','Prisma','LipoAI','Sknlab'],
+    rows: {
+      'Modality / Wavelength':        ['Fractional CO₂, CoolPeel®','CO₂ + 1570nm hybrid','Alexandrite + Nd:YAG','Monopolar RF','Hybrid RFMN','785nm picosecond Alexandrite','IPL + RF + EMS','Laser lipolysis','Aqua-delivery'],
+      'Key Indications':              ['Resurfacing, CoolPeel®, rejuvenation','Hybrid resurfacing, rejuvenation','Hair removal, pigment, vascular','Skin tightening, lifting','RF microneedling, tightening, acne scars','Tattoo removal, pigmentation, rejuvenation','Skin rejuvenation, toning, body','Body contouring, fat reduction','Skin renewal, hydration'],
+      'Treatment Categories Covered': ['Skin','Skin','Hair, pigment, vascular','Skin tightening','Skin, scar','Tattoo, pigment','Skin, body','Body','Skin'],
+      'Downtime / Patient Comfort':   ['Low, CoolPeel® minimal','Moderate, hybrid recovery','Low, integrated cooling','Low to none','Moderate','Low, picosecond','Low','Low to moderate','Low'],
+      'Skin Type Safety':             ['I–IV, CO₂ limitation','I–IV, CO₂ limitation','I–VI, dual wavelength','I–VI','I–VI','I–IV, Alexandrite limitation','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['Low','Low','Medium','Medium, applicators','Medium, tips','Low','Medium','Medium','Medium'],
+      'Pricing Tier':                 ['Mid (~$60K–$100K)','Mid (~$70K–$110K)','Mid (~$80K–$120K)','Mid (~$70K–$100K)','Mid (~$60K–$90K)','Mid (~$80K–$120K)','Mid (~$50K–$80K)','Premium (~$100K+)','Entry (~$30K–$50K)'],
+      'Target Buyer / Practice Type': ['Med-spa, derm seeking CO₂ entry','Derm, plastics, hybrid resurfacing','Derm, plastics, hair and pigment','Med-spa, tightening focused','Med-spa, RF microneedling buyer','Tattoo removal clinic, med-spa','Med-spa, multi-treatment','Body contouring clinic','Med-spa, skin renewal'],
+    }
+  },
+  cynosure: {
+    attrs: AESTH_ATTRS,
+    devices: ['XERF™','Clarity II','Elite iQ® Pro','Genius','PicoSure® Pro','eCO2 3D','Ultra','SculpSure®'],
+    rows: {
+      'Modality / Wavelength':        ['Multifrequency monopolar RF','755nm Alexandrite, 1064nm Nd:YAG','755nm Alexandrite, 1064nm Nd:YAG','RF microneedling','755nm picosecond, 532nm, 1064nm','Fractional CO₂','1550nm non-ablative fractional','1060nm laser lipolysis'],
+      'Key Indications':              ['Skin tightening, lifting, body','Hair removal, pigmentation, vascular, rejuvenation','Hair removal, pigmentation, vascular','Skin tightening, acne scars, wrinkle reduction','Tattoo removal, pigmentation, acne scars, rejuvenation','Resurfacing, rejuvenation, pigmentation','Non-ablative rejuvenation, texture','Body contouring, fat reduction'],
+      'Treatment Categories Covered': ['Skin tightening, body','Hair, skin, vascular, pigment','Hair, skin, vascular, pigment','Skin, scar','Tattoo, pigment, skin','Skin resurfacing','Skin','Body'],
+      'Downtime / Patient Comfort':   ['Low to none','Low, integrated cooling','Low, DCD cooling','Moderate','Low, picosecond','Moderate','Low','Low to none'],
+      'Skin Type Safety':             ['I–VI','I–VI, dual wavelength','I–VI, dual wavelength','I–VI','I–VI','I–IV, CO₂ limitation','I–VI','I–VI'],
+      'Consumable Cost':              ['Medium, RF tips','Medium, maintenance','Medium, maintenance','Medium, RF tips','Low','Low','Low','Medium, applicators'],
+      'Pricing Tier':                 ['Premium (~$150K+)','Mid-Premium (~$120K–$160K)','Mid-Premium (~$100K–$150K)','Mid (~$80K–$120K)','Premium (~$150K–$200K+)','Mid-Premium (~$100K–$150K)','Mid (~$80K–$120K)','Mid-Premium (~$100K–$150K)'],
+      'Target Buyer / Practice Type': ['Med-spa, tightening and body focus','Derm, plastics, hair and skin','Derm, plastics, hair and skin','Med-spa, RF microneedling buyer','Derm, plastics, tattoo specialist','Derm, plastics, resurfacing focus','Derm, anti-aging focus','Body contouring clinic, med-spa'],
+    }
+  },
+  btl: {
+    attrs: AESTH_ATTRS,
+    devices: ['EMSCULPT NEO®','EMFACE®','EXION®','EMSELLA®','EMTONE™','EMVITAL®','EXOMIND®'],
+    rows: {
+      'Modality / Wavelength':        ['HIFEM®, synchronized RF','Synchronized RF, HIFEM facial','Fractional RF microneedling, ultrasound','HIFEM electromagnetic','RF, acoustic wave','RF, electromagnetic','Electromagnetic, cognitive stimulation'],
+      'Key Indications':              ['Body contouring, muscle toning, fat reduction','Facial lifting, toning, wrinkle reduction','Skin tightening, texture, rejuvenation','Pelvic floor, incontinence, sexual wellness','Cellulite, skin tightening, body','Muscle restoration, wellness','Mental wellness, cognitive enhancement'],
+      'Treatment Categories Covered': ['Body, muscle','Face, muscle','Skin','Pelvic floor','Body, cellulite','Wellness, muscle','Wellness, cognitive'],
+      'Downtime / Patient Comfort':   ['None','None','Low to moderate','None, seated','None','None','None'],
+      'Skin Type Safety':             ['I–VI','I–VI','I–VI','I–VI','I–VI','I–VI','N/A'],
+      'Consumable Cost':              ['High, cycle cards and applicators','High, cycle cards','Medium, RF tips','High, cycle cards','Medium','Medium','Medium'],
+      'Pricing Tier':                 ['Premium (~$150K–$200K+)','Premium (~$100K–$150K)','Mid-Premium (~$80K–$120K)','Mid (~$100K–$150K)','Mid (~$60K–$90K)','Mid (~$60K–$90K)','Mid (~$60K–$90K)'],
+      'Target Buyer / Practice Type': ['High-volume body contouring practice, med-spa','Med-spa, facial rejuvenation focus','Med-spa, skin tightening focus','Women\'s wellness, med-spa','Body-focused med-spa','Wellness clinic, med-spa','Wellness clinic, mental health adjacent practice'],
+    }
+  },
+  sofwave: {
+    attrs: AESTH_ATTRS,
+    devices: ['Sofwave System (SUPERB™)','PureImpact VIP'],
+    rows: {
+      'Modality / Wavelength':        ['SUPERB™ ultrasound mid-dermal','Plyometric muscle activation'],
+      'Key Indications':              ['Skin tightening, wrinkle reduction, brow and neck lifting, acne scars, cellulite, upper arm laxity','Muscle toning, body contouring'],
+      'Treatment Categories Covered': ['Skin tightening, lifting','Body, muscle toning'],
+      'Downtime / Patient Comfort':   ['Low, minimal downtime','None'],
+      'Skin Type Safety':             ['I–VI','I–VI'],
+      'Consumable Cost':              ['Medium, consumable per treatment','Medium, consumable per treatment'],
+      'Pricing Tier':                 ['Premium (~$120K–$180K+)','Mid-Premium (~$80K–$120K)'],
+      'Target Buyer / Practice Type': ['Derm, plastics, high-end non-invasive lifting focus','Body toning focused practice, GLP-1 complementary clinic'],
+    }
+  },
+  candela: {
+    attrs: AESTH_ATTRS,
+    devices: ['Gentle Pro™ Series','PicoWay®','Nordlys®','Matrix™','Vbeam®','Glacē™'],
+    rows: {
+      'Modality / Wavelength':        ['755nm Alexandrite, 1064nm Nd:YAG','1064nm, 532nm, 785nm picosecond','IPL, Nd:YAG, fractional','RF microneedling','Pulsed dye laser 595nm','Hydrodermabrasion'],
+      'Key Indications':              ['Hair removal, pigmentation, vascular, skin rejuvenation','Multi-color tattoo removal, pigmentation, acne scars, rejuvenation','Hair removal, vascular, skin rejuvenation, acne','Skin tightening, acne scars, wrinkle reduction','Vascular lesions, rosacea, port wine stains','Skin rejuvenation, hydration, cleansing'],
+      'Treatment Categories Covered': ['Hair, skin, vascular, pigment','Tattoo, pigment, skin','Hair, skin, vascular','Skin, scar','Vascular only','Skin only'],
+      'Downtime / Patient Comfort':   ['Low, DCD cooling','Low, picosecond','Low','Moderate','Low to moderate','None'],
+      'Skin Type Safety':             ['I–VI, dual wavelength','I–VI, multi-wavelength','I–IV, IPL limitation','I–VI','I–IV, PDL limitation','I–VI'],
+      'Consumable Cost':              ['Medium, maintenance','Low','Medium, filters','Medium, RF tips','Low','Medium'],
+      'Pricing Tier':                 ['Mid-Premium (~$120K–$180K)','Premium (~$150K–$200K+)','Mid (~$80K–$130K)','Mid (~$80K–$120K)','Mid (~$70K–$120K)','Entry-Mid (~$30K–$60K)'],
+      'Target Buyer / Practice Type': ['Derm, plastics, hair and skin focus','Derm, plastics, tattoo specialist','Multi-service derm, med-spa','Med-spa, RF microneedling buyer','Vascular specialist, derm','Med-spa, skin renewal'],
+    }
+  },
+  lumenis: {
+    attrs: AESTH_ATTRS,
+    devices: ['Stellar M22™','SPLENDOR X™','ULTRApulse Alpha','triLift™','Legend Pro+','FoLix™'],
+    rows: {
+      'Modality / Wavelength':        ['IPL XPL™, Nd:YAG, 1570nm ResurFX, optional modules','755nm Alexandrite, 1064nm Nd:YAG, BLEND X®','Fractional CO₂, UltraPulse','DMR facial stimulation, RF','RF, ultrasound body contouring','Laser hair restoration'],
+      'Key Indications':              ['Hair removal, skin rejuvenation, vascular, pigmentation, acne, resurfacing','Hair removal, pigmentation, vascular, skin rejuvenation','Deep resurfacing, scar revision, pigmentation, rejuvenation','Facial lifting, muscle stimulation, toning','Body contouring, tightening, cellulite','Hair loss, scalp treatment'],
+      'Treatment Categories Covered': ['Hair, skin, vascular, pigment, resurfacing','Hair, skin, vascular, pigment','Skin resurfacing only','Face, muscle','Body, tightening','Hair restoration'],
+      'Downtime / Patient Comfort':   ['Low to moderate, depends on handpiece','Low, integrated cooling','Moderate to high','Low to none','Low to none','Minimal'],
+      'Skin Type Safety':             ['I–VI depending on handpiece','I–VI, dual wavelength','I–IV, CO₂ limitation','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['Medium, IPL filters and handpieces','Low','Low','Medium','Medium','Medium'],
+      'Pricing Tier':                 ['Premium (~$100K–$200K+)','Premium (~$120K–$180K+)','Premium (~$150K–$200K+)','Mid-Premium (~$80K–$130K)','Mid-Premium (~$80K–$130K)','Mid (~$60K–$100K)'],
+      'Target Buyer / Practice Type': ['Multi-service derm, med-spa, IPL-led practice','Derm, plastics, hair and pigment focus','Derm, plastics, deep resurfacing specialist','Med-spa, facial toning focus','Body-focused practice, med-spa','Hair restoration clinic, derm'],
+    }
+  },
+  jeisys: {
+    attrs: AESTH_ATTRS,
+    devices: ['Potenza®','DENSITY','Edge ONE'],
+    rows: {
+      'Modality / Wavelength':        ['RF microneedling mono and bipolar, 1MHz + 2MHz','Dual-mode monopolar + bipolar RF','Fractional CO₂'],
+      'Key Indications':              ['Skin tightening, collagen remodeling, acne scars, wrinkle reduction, topical infusion','Collagen building, skin tightening, lifting','Resurfacing, rejuvenation, pigmentation, acne scars'],
+      'Treatment Categories Covered': ['Skin, scar','Skin tightening','Skin resurfacing'],
+      'Downtime / Patient Comfort':   ['Moderate','Low to moderate','Moderate'],
+      'Skin Type Safety':             ['I–VI','I–VI','I–IV, CO₂ limitation'],
+      'Consumable Cost':              ['Medium, RF tips','Medium','Low'],
+      'Pricing Tier':                 ['Mid (~$60K–$100K)','Mid (~$60K–$90K)','Mid (~$60K–$90K)'],
+      'Target Buyer / Practice Type': ['Med-spa, RF microneedling entry buyer','Med-spa, tightening focus','Med-spa, derm seeking CO₂ resurfacing entry'],
+    }
+  },
+  aerolase: {
+    attrs: AESTH_ATTRS,
+    devices: ['Neo®','Era Elite®','Exci308'],
+    rows: {
+      'Modality / Wavelength':        ['1064nm Nd:YAG 650-microsecond pulse','2940nm Er:YAG 300-microsecond pulse','308nm excimer'],
+      'Key Indications':              ['Acne, rosacea, pigmentation, vascular, hair removal, rejuvenation, PFB','Skin resurfacing, pigmented lesions, scar revision, rejuvenation','Psoriasis, vitiligo, eczema, autoimmune skin conditions'],
+      'Treatment Categories Covered': ['Skin, hair, vascular, pigment','Skin resurfacing, pigment, scar','Medical dermatology only'],
+      'Downtime / Patient Comfort':   ['Minimal, low thermal damage','Low, minimal thermal','Minimal'],
+      'Skin Type Safety':             ['I–VI, 1064nm inclusive','I–VI','I–VI'],
+      'Consumable Cost':              ['Low, no consumables','Low, no consumables','Low, no consumables'],
+      'Pricing Tier':                 ['Mid (~$70K–$100K)','Mid (~$80K–$120K)','Mid (~$60K–$90K)'],
+      'Target Buyer / Practice Type': ['Diverse market derm, med-spa, broad indication coverage','Derm, resurfacing and pigment focus','Medical dermatologist, phototherapy specialist'],
+    }
+  },
+  amp: {
+    attrs: AESTH_ATTRS,
+    devices: ['NOUVADerm™','Scarlet Pro','Agnes RF','AQUAFIRM','ExsAlpha Pro','PLADUOPRO','PLASMAGE®'],
+    rows: {
+      'Modality / Wavelength':        ['RF microneedling','RF microneedling','Focused RF, micro-insulated needle','Hydrodermabrasion, aqua-delivery','RF, multi-application','Plasma technology','Plasma technology'],
+      'Key Indications':              ['Skin tightening, acne scars, rejuvenation','Skin tightening, collagen building, acne scars','Targeted fat reduction, skin tightening, acne','Skin hydration, cleansing, renewal','Skin tightening, rejuvenation','Vascular, pigmentation, skin tightening','Vascular, pigmentation, skin tightening, lesion removal'],
+      'Treatment Categories Covered': ['Skin, scar','Skin, scar','Skin, targeted fat','Skin renewal','Skin','Skin, vascular, pigment','Skin, vascular, pigment, lesions'],
+      'Downtime / Patient Comfort':   ['Moderate','Moderate','Low to moderate','None','Low','Low','Low'],
+      'Skin Type Safety':             ['I–VI','I–VI','I–VI','I–VI','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['Medium, tips','Medium, tips','Medium','Medium','Medium','Medium','Medium'],
+      'Pricing Tier':                 ['Mid (~$50K–$80K)','Mid (~$50K–$80K)','Mid (~$40K–$70K)','Entry-Mid (~$20K–$40K)','Mid (~$40K–$70K)','Mid (~$40K–$70K)','Mid (~$40K–$70K)'],
+      'Target Buyer / Practice Type': ['Med-spa, RF microneedling buyer','Med-spa, collagen building focus','Med-spa, targeted tightening','Med-spa, skin renewal','Med-spa, multi-treatment','Med-spa, vascular and pigment','Med-spa, vascular and pigment'],
+    }
+  },
+  cutera: {
+    attrs: AESTH_ATTRS,
+    devices: ['AviClear®','Secret™ PRO','Secret™ DUO','excel® V+','truSculpt®','truFlex™','xeo®+','enlighten®'],
+    rows: {
+      'Modality / Wavelength':        ['1726nm acne laser','Fractional CO₂, RF microneedling','RF microneedling','532nm, 1064nm Nd:YAG','Monopolar RF','EMS','IPL, Nd:YAG, fractional multi-platform','Picosecond + nanosecond Nd:YAG, 1064nm + 532nm'],
+      'Key Indications':              ['All acne severities, long-term treatment','Resurfacing, skin tightening, acne scars','Skin tightening, acne scars','Vascular, pigmentation, skin rejuvenation','Body contouring, fat reduction','Muscle toning, body sculpting','Hair removal, vascular, resurfacing, pigmentation','Tattoo removal, pigmentation, skin rejuvenation'],
+      'Treatment Categories Covered': ['Acne only','Skin resurfacing, tightening','Skin, scar','Skin, vascular, pigment','Body','Body, muscle','Hair, skin, vascular, pigment','Tattoo, pigment, skin'],
+      'Downtime / Patient Comfort':   ['Minimal','Moderate','Moderate','Low','None','None','Low to moderate','Low'],
+      'Skin Type Safety':             ['I–VI','I–V, RF safer','I–VI','I–VI, dual wavelength','I–VI','I–VI','I–IV, IPL limitation','I–VI'],
+      'Consumable Cost':              ['Medium','Medium, RF tips','Medium, RF tips','Low','Medium, applicators','Medium, applicators','Medium','Low'],
+      'Pricing Tier':                 ['Premium (~$100K–$150K)','Mid-Premium (~$80K–$130K)','Mid (~$60K–$100K)','Mid (~$70K–$110K)','Mid (~$70K–$100K)','Mid (~$70K–$100K)','Mid (~$80K–$120K)','Mid-Premium (~$80K–$130K)'],
+      'Target Buyer / Practice Type': ['Acne specialist, derm, GP with high acne patient volume','Derm, plastics, resurfacing and tightening','Med-spa, RF microneedling buyer','Vascular specialist, derm','Body contouring practice','Body-focused med-spa','Multi-service aesthetic practice','Derm, plastics, tattoo and pigment specialist'],
+    }
+  },
+  sciton: {
+    attrs: AESTH_ATTRS,
+    devices: ['JOULE®','mJOULE™','OMNI™','BBL® HEROic™','HALO® TRIBRID™','MOXI®'],
+    rows: {
+      'Modality / Wavelength':        ['Er:YAG, Nd:YAG, BBL, modular','Er:YAG, Nd:YAG, modular entry','Nd:YAG, diode hair removal platform','Broadband light BBL','Hybrid fractional 1470nm, 2940nm','Non-ablative 1927nm'],
+      'Key Indications':              ['Resurfacing, BBL rejuvenation, hair, vascular, tightening','Resurfacing, rejuvenation, hair, vascular','Hair removal, skin rejuvenation','Skin rejuvenation, pigmentation, vascular, acne','Hybrid fractional resurfacing, rejuvenation, pigmentation, scar','Non-ablative rejuvenation, tone, texture'],
+      'Treatment Categories Covered': ['Skin, hair, vascular, BBL','Skin, hair, vascular','Hair, skin','Skin, vascular, pigment','Skin resurfacing, pigment','Skin'],
+      'Downtime / Patient Comfort':   ['Low to moderate, depends on module','Low to moderate','Low','Low, BBL comfort','Moderate, hybrid recovery','Low, minimal downtime'],
+      'Skin Type Safety':             ['I–VI depending on module','I–VI depending on module','I–VI','I–IV, BBL limitation','I–IV, CO₂ limitation','I–VI'],
+      'Consumable Cost':              ['Low','Low','Low','Low','Low','Low'],
+      'Pricing Tier':                 ['Premium (~$180K–$250K+)','Mid-Premium (~$130K–$180K)','Mid (~$80K–$120K)','Mid-Premium (~$100K–$150K)','Premium (~$130K–$200K)','Mid (~$60K–$100K)'],
+      'Target Buyer / Practice Type': ['Core derm, plastics, clinical benchmark buyers','Derm, plastics, mid-tier entry','High-volume hair removal, med-spa','Derm, plastics, BBL rejuvenation focus','Core derm, plastics, resurfacing specialist','Med-spa, anti-aging entry'],
+    }
+  },
+  inmode: {
+    attrs: AESTH_ATTRS,
+    devices: ['Morpheus8','Ignite','RF Optima','sMAX','EvolveX','EmpowerRF','Luxora','ApexRF','Define'],
+    rows: {
+      'Modality / Wavelength':        ['RF microneedling bipolar fractionated','RF microneedling, advanced handpieces','IPL, 755nm, 810nm, 1064nm, RF','Hands-free bipolar RF, EMS','Bipolar RF, EMS, multi-application GYN','Diode hair removal','RF microneedling','Body contouring, RF lipolysis','RF body contouring'],
+      'Key Indications':              ['Skin tightening, acne scars, wrinkle reduction, fat remodeling','Skin tightening, acne scars, rejuvenation','Hair removal, pigmentation, skin rejuvenation','Body contouring, tightening, muscle toning','Incontinence, pelvic floor, sexual wellness, vaginal tightening','Hair removal, skin rejuvenation','Skin tightening, acne scars','Body contouring, fat reduction, skin tightening','Body contouring, fat reduction'],
+      'Treatment Categories Covered': ['Skin, scar, fat remodeling','Skin, scar','Hair, skin, pigment','Body, muscle','GYN, pelvic floor','Hair, skin','Skin, scar','Body, fat','Body'],
+      'Downtime / Patient Comfort':   ['Moderate','Moderate','Low','None','None','Low','Moderate','Low to moderate','Low to none'],
+      'Skin Type Safety':             ['I–VI','I–VI','I–VI, dual wavelength','I–VI','I–VI','I–VI','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['High, RF tips','High, RF tips','Medium, maintenance','High, applicators','High, applicators and cycle cards','Low','High, RF tips','Medium','Medium'],
+      'Pricing Tier':                 ['Mid-Premium (~$80K–$120K)','Mid-Premium (~$80K–$120K)','Mid-Premium (~$100K–$150K)','Mid-Premium (~$80K–$120K)','Mid-Premium (~$100K–$150K)','Mid (~$60K–$90K)','Mid (~$70K–$100K)','Mid-Premium (~$80K–$120K)','Mid (~$60K–$90K)'],
+      'Target Buyer / Practice Type': ['Med-spa, hybrid clinic, RF microneedling buyer','Med-spa, clinical upgrade from Morpheus8','Derm, plastics, multi-modality hair and skin','Body-focused med-spa, hybrid clinic','Women\'s wellness clinic, med-spa GYN','High-volume hair removal, med-spa','Med-spa, RF microneedling buyer','Body contouring clinic, med-spa','Body contouring clinic'],
+    }
+  },
+  alma: {
+    attrs: AESTH_ATTRS,
+    devices: ['Soprano Titanium','Alma Harmony','Alma Hybrid','Opus','Accent Prime','Alma TED','BeautiFill'],
+    rows: {
+      'Modality / Wavelength':        ['Diode 810nm, 940nm, 1060nm','Multi-platform: diode, CO₂, IPL, RF, various','CO₂ + 1570nm hybrid','RF microneedling, plasma RF','RF, ultrasound body contouring','Acoustic, low-level laser, air pressure','Laser lipolysis, fat transfer'],
+      'Key Indications':              ['Hair removal, skin rejuvenation','Hair, skin, vascular, pigment, tightening, body, multiple','Hybrid resurfacing, rejuvenation, pigmentation','Skin tightening, acne scars, plasma lifting','Body contouring, tightening, cellulite','Hair loss, scalp treatment','Body contouring, fat reduction and transfer'],
+      'Treatment Categories Covered': ['Hair, skin','Hair, skin, vascular, pigment, body, multiple','Skin resurfacing, pigment','Skin, scar','Body, tightening','Hair restoration','Body'],
+      'Downtime / Patient Comfort':   ['Minimal, in-motion','Low to moderate, depends on module','Moderate, hybrid recovery','Moderate','Low to none','Minimal','Low to moderate'],
+      'Skin Type Safety':             ['I–VI','I–VI depending on module','I–IV, CO₂ limitation','I–VI','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['Medium, tips and maintenance','Medium, varies by module','Low','Medium, plasma RF tips','Medium','Medium','Medium'],
+      'Pricing Tier':                 ['Mid (~$80K–$130K)','Premium (~$120K–$180K+)','Mid-Premium (~$90K–$140K)','Mid (~$70K–$110K)','Mid-Premium (~$80K–$130K)','Mid (~$60K–$100K)','Premium (~$100K–$150K)'],
+      'Target Buyer / Practice Type': ['High-volume hair removal clinic, med-spa','Multi-specialty clinic, high-volume med-spa','Derm, plastics, hybrid resurfacing','Med-spa, plasma and RF microneedling buyer','Body-focused practice, med-spa','Hair restoration clinic, derm','Body contouring specialist, surgical adjunct'],
+    }
+  },
+  solta: {
+    attrs: AESTH_ATTRS,
+    devices: ['Thermage® FLX','Fraxel FTX®','Clear + Brilliant®','VASERlipo®'],
+    rows: {
+      'Modality / Wavelength':        ['Monopolar RF','Fractional 1550nm, 1927nm','Gentle fractional 1440nm, 1927nm','Ultrasound-assisted liposuction'],
+      'Key Indications':              ['Skin tightening, lifting, wrinkle reduction','Resurfacing, scar revision, pigmentation, rejuvenation','Prejuvenation, tone and texture, gentle resurfacing','Body contouring, fat removal, skin tightening'],
+      'Treatment Categories Covered': ['Skin tightening','Skin resurfacing','Skin, preventive','Body, surgical'],
+      'Downtime / Patient Comfort':   ['Low to none','Moderate','Low, minimal','Surgical recovery'],
+      'Skin Type Safety':             ['I–VI','I–VI','I–VI','I–VI'],
+      'Consumable Cost':              ['High, Thermage tips per treatment','Low','Low','Surgical consumables'],
+      'Pricing Tier':                 ['Premium (~$130K–$170K)','Mid-Premium (~$90K–$130K)','Mid (~$60K–$90K)','Premium (~$150K–$230K)'],
+      'Target Buyer / Practice Type': ['Premium clinic, derm, plastics, tightening-focused','Derm, plastics, resurfacing specialist','Med-spa, entry-level resurfacing, preventive aesthetics','Plastic surgeon, body contouring specialist'],
+    }
+  },
+};
+// ─── FOTONA BENCHMARK DATA ───────────────────
+const DENTAL_ATTRS_COMP = DENTAL_ATTRS;
+const COMP_DATA = {
+  'lw-ste': {
+    competitors: ['Biolase Epic X','DenMat SOL Desktop','AMD Picasso+','Ultradent Gemini EVO'],
+    rows: {
+      'Modality / Wavelength':  ['Er:YAG 2940nm','Diode 940nm','Diode 810nm','Diode 810–980nm','Diode 810nm, 980nm'],
+      'Key Indications':        ['Soft tissue, perio, hygiene, endodontics (SWEEPS®), restorative (cavity prep)','Soft tissue, whitening, hygiene','Soft tissue, hygiene, perio adjunct','Soft tissue, hygiene, hemostasis','Soft tissue, hygiene, PBM, frenectomy'],
+      'Hard Tissue Capability': ['True hard tissue, cavity prep, restorative','None','None','None','None'],
+      'Anesthesia Requirement': ['Often anesthesia-free','Required for most','Required for most','Required for most','Required for most'],
+      'Clinical Versatility':   ['Soft and hard tissue, multi-discipline, no facial aesthetic crossover','Soft tissue only, no hard tissue, no facial aesthetic crossover','Soft tissue only, no hard tissue, no facial aesthetic crossover','Soft tissue only, no hard tissue, no facial aesthetic crossover','Soft tissue and PBM, no hard tissue, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, minimal recurring','Medium, tips and accessories','Low','Low','Low, tips only'],
+      'Pricing Tier':           ['Foundation (~$70K+)','Entry (~$25K–$40K)','Entry (~$5K–$10K)','Entry (~$3.8K–$8K)','Entry (~$5K–$15K)'],
+    }
+  },
+  'skypulse': {
+    competitors: ['Biolase Waterlase iPlus','PerioLase MVP-7','Convergent Dental Solea','DEKA SmartPerio Nd:YAG'],
+    rows: {
+      'Modality / Wavelength':  ['Er:YAG 2940nm, SSP, SWEEPS®, R-SWEEPS®','Er,Cr:YSGG 2780nm, diode','Nd:YAG 1064nm, 7 pulse durations','CO₂ 9.3μm','Nd:YAG 1064nm'],
+      'Key Indications':        ['Endo irrigation, debridement, disinfection, canal cleaning','All-tissue, endo, perio, restorative, hygiene','Perio (LANAP®), peri-implantitis (LAPIP™), implant (BLAST™)','Cavity prep, all-tissue, perio, hygiene','Perio, endo adjunct, soft tissue'],
+      'Hard Tissue Capability': ['Er:YAG hard tissue capable','Full Er,Cr:YSGG','None','All-tissue CO₂','None'],
+      'Anesthesia Requirement': ['Often anesthesia-free','Reduced for soft tissue','Reduced, LANAP often performed without traditional anesthesia','Anesthesia-free','Required for most'],
+      'Clinical Versatility':   ['Endo-focused, compact portable, no facial aesthetic crossover','Full all-tissue dental, no facial aesthetic crossover','Perio and implant only, no facial aesthetic crossover','All-tissue GP focus, no facial aesthetic crossover','Perio and endo adjunct only, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, minimal recurring','Medium, tips and fibers','Low, fiber tips','Low, minimal','Low'],
+      'Pricing Tier':           ['Foundation (~$70K+)','Mid (~$50K–$80K)','Mid (~$70K–$120K)','Premium (~$75K–$120K)','Mid (~$60K–$90K)'],
+    }
+  },
+  'lw-ii': {
+    competitors: ['Biolase Waterlase MDX','Convergent Dental Solea','DEKA SmartXide Ultraspeed2','Dentsply SiroLaser Blue','LightScalpel LS-1005'],
+    rows: {
+      'Modality / Wavelength':  ['Er:YAG 2940nm, Nd:YAG 1064nm, ASP, QSP, SWEEPS®, R-SWEEPS®, SSP, MSP, SP, LP, VLP, SMOOTH®','Er,Cr:YSGG 2780nm, diode','CO₂ 9.3μm','CO₂ 10,600nm RF-excited','Diode 445nm, 970nm, 660nm','CO₂ 10,600nm'],
+      'Key Indications':        ['Hard tissue, perio, endo, soft tissue, implant, NightLase®, PBM, facial aesthetics','All-tissue, endo, perio, hygiene, whitening','All-tissue, cavity prep, perio, hygiene, pediatric','Soft tissue, perio, endo adjunct, oral surgery','Soft tissue, perio, endo adjunct, PBM, hygiene','Soft tissue, frenectomy, TOTS, perio, implant'],
+      'Hard Tissue Capability': ['Full Er:YAG, enamel, dentin, caries removal','Full Er,Cr:YSGG','All-tissue CO₂','CO₂ soft tissue only','None','None'],
+      'Anesthesia Requirement': ['Often anesthesia-free for cavity prep and most soft tissue','Reduced for soft tissue','Anesthesia-free','Required for most','Required for most','Required for most'],
+      'Clinical Versatility':   ['Full dual-wavelength multi-specialty dental and facial aesthetic crossover','All-tissue dental only, no facial aesthetic crossover','All-tissue GP and hygiene focus, no facial aesthetic crossover','Dental and surgical soft tissue only, no facial aesthetic crossover','Digital ecosystem integration, no facial aesthetic crossover','Dental and medical soft tissue only, no facial aesthetic crossover'],
+      'Consumable Cost':        ['Low, no consumables','Medium, tips and fibers','Low, minimal','Low, minimal','Medium, bundled consumables','Low, fiber tips'],
+      'Pricing Tier':           ['Advanced (~$90K–$110K)','Mid (~$60K–$100K)','Premium (~$75K–$120K)','Mid (~$60K–$120K)','Entry-Mid (~$10K–$25K)','Mid (~$35K–$60K)'],
+    }
+  },
+  'lw-max': {
+    competitors: ['Biolase Waterlase iPlus Premier','Convergent Solea + Perioguide','LightScalpel LS-2010','Bien-Air iChiropro'],
+    rows: {
+      'Modality / Wavelength':  ['Er:YAG 2940nm, Nd:YAG 1064nm, QSP, VSP, SMOOTH®, FRAC3®, PIANO®, full pulse suite','Er,Cr:YSGG 2780nm, diode','CO₂ 9.3μm','CO₂ 10,600nm super-pulse','Electric micromotor, iPad-controlled implantology'],
+      'Key Indications':        ['Full dental (endo, perio, implant, oral surgery, restorative, NightLase®), facial aesthetics (Fotona4D®, SmoothLase®, LipLase®, skin resurfacing, vascular, scar revision)','All-tissue, endo, perio, implant, hygiene, whitening','All-tissue, cavity prep, perio, Perioguide™ suture-free perio therapy','Soft tissue, frenectomy, TOTS, perio, implant, crown lengthening','Implantology, oral surgery, restorative, guided surgery'],
+      'Hard Tissue Capability': ['Full Er:YAG, Nd:YAG','Full Er,Cr:YSGG','All-tissue CO₂','CO₂ soft tissue only','None, rotary only'],
+      'Anesthesia Requirement': ['Often anesthesia-free','Reduced for soft tissue','Anesthesia-free','Required for most','N/A, mechanical only'],
+      'Clinical Versatility':   ['Full multi-specialty dental and aesthetic crossover, dual-wavelength platform','All-tissue dental only, no facial aesthetic crossover','All-tissue plus perio therapy, single platform, no facial aesthetic crossover','Dental and medical soft tissue only, no facial aesthetic crossover','Implantology and restorative only, no laser capability'],
+      'Consumable Cost':        ['Low, no consumables','Medium, tips and fibers','Low, minimal','Low, fiber tips','Medium, handpiece maintenance'],
+      'Pricing Tier':           ['Elite (~$120K–$135K+)','Premium (~$80K–$100K)','Premium (~$75K–$120K)','Premium (~$60K–$80K)','Premium (~$15K–$25K)'],
+    }
+  },
+  'xs-dyn': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Cartessa Tetra PRO','Cutera xeo®+','Alma Harmony'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm, VSP technology','Fractional CO₂, CoolPeel®','IPL, Nd:YAG, Fractional','Diode, CO₂, IPL, RF'],
+      'Key Indications':               ['Skin resurfacing, soft tissue surgery, GYN rejuvenation','Fractional resurfacing, CoolPeel®, skin rejuvenation','Hair removal, vascular, resurfacing, pigmentation','Hair removal, tightening, resurfacing, pigmentation, body'],
+      'Treatment Categories Covered':  ['Skin, GYN','Skin only','Skin, hair, vascular','Skin, hair, body, vascular'],
+      'Downtime / Patient Comfort':    ['Low to none, often anesthesia-free','Low, CoolPeel® minimal downtime','Low, light-based treatments','Low to moderate, depends on module'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–IV, CO₂ limitation on darker types','I–IV, IPL limitation on darker types','I–VI depending on module'],
+      'Consumable Cost':               ['Low, no consumables','Low','Medium, tips and applicators','Medium, varies by module'],
+      'Pricing Tier':                  ['Foundation','Entry (~$40K–$80K)','Entry-Mid (~$80K–$120K)','Mid (~$85K–$150K)'],
+      'Target Buyer / Practice Type':  ['Dermatology, GYN, resurfacing-focused aesthetic practice','Med-spa, dermatology seeking CO₂ resurfacing entry','Multi-service aesthetic practice, med-spa','High-volume med-spa, multi-specialty clinic'],
+    }
+  },
+  'xp-dyn': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Cynosure Clarity II','Candela Gentle Pro™','Alma Soprano Titanium'],
+    rows: {
+      'Modality / Wavelength':         ['Nd:YAG 1064nm','755nm Alexandrite, 1064nm Nd:YAG','755nm Alexandrite, 1064nm Nd:YAG','Diode 810nm, 940nm, 1060nm'],
+      'Key Indications':               ['Hair removal, vascular, warts, wrinkles, acne','Hair removal, skin rejuvenation, pigmentation, vascular','Hair removal, pigmentation, vascular, skin rejuvenation','Hair removal, skin rejuvenation'],
+      'Treatment Categories Covered':  ['Skin, hair, vascular','Hair, skin, vascular, pigment','Hair, skin, vascular, pigment','Hair, skin only'],
+      'Downtime / Patient Comfort':    ['Low, often anesthesia-free','Low, integrated cooling','Low, DCD cooling system','Minimal, in-motion technology'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–VI, dual wavelength','I–VI, dual wavelength','I–VI, diode advantage'],
+      'Consumable Cost':               ['Low, no consumables','Medium, maintenance','Medium, maintenance','Medium, tips and maintenance'],
+      'Pricing Tier':                  ['Foundation','Mid (~$100K–$150K)','Mid (~$100K–$150K)','Mid (~$80K–$130K)'],
+      'Target Buyer / Practice Type':  ['TBD — confirm internally','Dermatology, plastics, med-spa seeking dual-wavelength hair','Dermatology, plastics, hair and pigment focus','High-volume hair removal clinic, med-spa'],
+    }
+  },
+  'tw-intima': {
+    attrs: AESTH_ATTRS,
+    competitors: ['InMode EmpowerRF','BTL EMSELLA','Sciton JOULE (GYN)'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm (SMOOTH® and ablative modes), Nd:YAG (PIANO®, QCW, VERSA®), dual-wavelength','Bipolar RF, EMS multi-application GYN','HIFEM electromagnetic stimulation','Er:YAG, BBL multi-application'],
+      'Key Indications':               ['Skin resurfacing, scar revision, pigmented lesions, skin tightening, GYN rejuvenation, vascular treatments, pain management, PBM','Incontinence, pelvic floor, sexual wellness, vaginal tightening','Pelvic floor, incontinence, sexual wellness','GYN rejuvenation, resurfacing, vascular'],
+      'Treatment Categories Covered':  ['Skin, GYN, vascular, therapy (pain, PBM)','GYN non-invasive only','Pelvic floor only','GYN, aesthetic crossover'],
+      'Downtime / Patient Comfort':    ['Minimal to none, often anesthesia-free, high patient comfort','None','None, seated treatment','Topical recommended, low downtime'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','All tissue types','All tissue types','All tissue types'],
+      'Consumable Cost':               ['Low, no consumables','High, applicators and cycle cards','High, cycle cards per treatment','Low'],
+      'Pricing Tier':                  ['Advanced','Mid-Premium (~$100K–$150K)','Mid (~$100K–$150K)','Premium (~$180K–$250K+)'],
+      'Target Buyer / Practice Type':  ['Dermatology, gynecology-focused practice, aesthetic clinics expanding into functional treatments','Women\'s wellness clinic, med-spa GYN','Women\'s wellness, med-spa pelvic floor focus','Full-service dermatology, GYN practice'],
+    }
+  },
+  'tw-4d': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Sciton HALO® TRIBRID','Cutera Secret™ PRO','Lumenis ULTRApulse Alpha'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP','Hybrid fractional 1470nm, 2940nm','Fractional CO₂, RF microneedling','Fractional CO₂, UltraPulse'],
+      'Key Indications':               ['Fotona4D® facial rejuvenation, Fotona4D® Men, SmoothEye®, LipLase®, VectorLift®, active acne, scar revision, vascular, rosacea, benign lesions, hair removal','Hybrid fractional resurfacing, rejuvenation, pigmentation, scar','Resurfacing, skin tightening combined, acne scars','Deep resurfacing, scar revision, pigmentation, rejuvenation'],
+      'Treatment Categories Covered':  ['Skin, hair, vascular, tightening, full facial platform','Skin resurfacing, pigment','Skin resurfacing, tightening','Skin resurfacing only'],
+      'Downtime / Patient Comfort':    ['Minimal, non-ablative passes often comfort-only, little to no downtime','Moderate, hybrid fractional recovery','Moderate, CO₂ and RF combination','Moderate to high, deep resurfacing'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–IV, CO₂ limitation','I–V, RF safer on darker types','I–IV, CO₂ limitation'],
+      'Consumable Cost':               ['Low, no consumables','Low','Medium, RF tips','Low'],
+      'Pricing Tier':                  ['Advanced','Premium (~$130K–$200K)','Mid-Premium (~$80K–$130K)','Premium (~$150K–$200K+)'],
+      'Target Buyer / Practice Type':  ['Facial aesthetics practice, rejuvenation-focused med-spa, dual-specialty clinic','Core dermatology, plastics, clinical benchmark buyers','Dermatology, plastics seeking combined resurfacing and tightening','Dermatology, plastics, deep resurfacing specialists'],
+    }
+  },
+  'sp-pro': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Sciton JOULE®','Cynosure Elite iQ® Pro','Lumenis Stellar M22™'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm, Nd:YAG 1064nm, QCW, SMOOTH®, FRAC3®, PIANO®, VERSA, MSP, SP, LP, VLP, XLP, TURBO','Er:YAG, Nd:YAG, BBL, modular platform','755nm Alexandrite, 1064nm Nd:YAG','IPL XPL™, Nd:YAG, 1570nm ResurFX, optional modules'],
+      'Key Indications':               ['Resurfacing, Fotona4D®, TightSculpting®, NightLase®, hair removal, vascular, FRAC3®, PIANO®, GYN, endovenous, laser lipolysis, scar revision, pigmented lesions, active acne, wart removal, onychomycosis','Resurfacing, BBL rejuvenation, hair, vascular, tightening','Hair removal, pigmentation, vascular, skin rejuvenation','Hair removal, skin rejuvenation, vascular, pigmentation, acne, resurfacing'],
+      'Treatment Categories Covered':  ['Skin, hair, vascular, GYN, surgical, body contouring, 50+ FDA cleared applications','Skin, hair, vascular, BBL','Hair, skin, vascular, pigment','Hair, skin, vascular, pigment, resurfacing'],
+      'Downtime / Patient Comfort':    ['Minimal to none depending on indication','Low to moderate depending on module','Low, cooling integrated','Low to moderate depending on handpiece'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–VI depending on module','I–VI, dual wavelength','I–VI depending on handpiece'],
+      'Consumable Cost':               ['Low, no consumables','Low','Medium, maintenance','Medium, IPL filters and handpieces'],
+      'Pricing Tier':                  ['Elite (~$165K–$200K)','Premium (~$180K–$250K+)','Mid-Premium (~$100K–$150K)','Premium (~$100K–$200K+)'],
+      'Target Buyer / Practice Type':  ['Full-service dermatology, plastics, high-volume multi-specialty aesthetic practice','Core dermatology, plastics, clinical benchmark buyers','Dermatology, plastics, high-volume hair and skin practice','Multi-service dermatology, med-spa seeking IPL-led platform'],
+    }
+  },
+  'dyn-max': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Sciton JOULE®','Lumenis Stellar M22™','Cutera xeo®+'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP, TURBO','Er:YAG, Nd:YAG, BBL, modular platform','IPL XPL™, Nd:YAG, 1570nm ResurFX, optional modules','IPL, Nd:YAG, fractional'],
+      'Key Indications':               ['Fotona4D®, SmoothEye®, LipLase®, VectorLift®, TightSculpting®, TensorTight, NightLase®, active acne, fractional resurfacing, hair removal, pigmented and vascular lesions, scar revision, GYN, laser lipolysis, endovenous laser ablation','Resurfacing, BBL rejuvenation, hair, vascular, tightening','Hair removal, skin rejuvenation, vascular, pigmentation, acne, resurfacing','Hair removal, vascular, resurfacing, pigmentation'],
+      'Treatment Categories Covered':  ['Skin, hair, vascular, body, GYN, surgical, 100+ treatment options','Skin, hair, vascular, BBL','Hair, skin, vascular, pigment, resurfacing','Skin, hair, vascular'],
+      'Downtime / Patient Comfort':    ['Minimal to none, CoolMist™ integrated cooling, no consumables','Low to moderate depending on module','Low to moderate depending on handpiece','Low, light-based treatments'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–VI depending on module','I–VI depending on handpiece','I–IV, IPL limitation on darker types'],
+      'Consumable Cost':               ['Low, no consumables, CoolMist™ uses water only','Low','Medium, IPL filters and handpieces','Medium, tips and applicators'],
+      'Pricing Tier':                  ['Elite','Premium (~$180K–$250K+)','Premium (~$100K–$200K+)','Entry-Mid (~$80K–$120K)'],
+      'Target Buyer / Practice Type':  ['Premium full-service practices seeking maximum versatility and clinical range','Core dermatology, plastics, clinical benchmark buyers','Multi-service dermatology, med-spa seeking IPL-led platform','Multi-service aesthetic practice, med-spa'],
+    }
+  },
+  'sw-maqx': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Cynosure PicoSure® Pro','Candela PicoWay®','Cartessa Toro','Aerolase Neo®'],
+    rows: {
+      'Modality / Wavelength':         ['Nd:YAG 1064nm, KTP 532nm, 585nm dye, 650nm dye, 14 modalities across 4 wavelengths, MaQX Q-switched, FracTAT®','755nm picosecond, 532nm, 1064nm','1064nm, 532nm, 785nm picosecond','785nm picosecond Alexandrite','1064nm Nd:YAG 650-microsecond'],
+      'Key Indications':               ['Tattoo removal (multi-color), melasma, pigmentation, skin toning and whitening, FracTAT® rejuvenation, vascular lesions, active acne, scar revision, hair removal','Tattoo removal, pigmentation, acne scars, skin rejuvenation','Multi-color tattoo removal, pigmentation, acne scars, rejuvenation','Tattoo removal, pigmentation, skin rejuvenation','Acne, rosacea, pigmentation, vascular, hair removal, rejuvenation'],
+      'Treatment Categories Covered':  ['Pigment, tattoo, vascular, rejuvenation, scar, hair','Pigment, tattoo, skin rejuvenation','Pigment, tattoo, skin rejuvenation','Tattoo, pigment focus','Broad 30+ indications, skin, vascular, hair'],
+      'Downtime / Patient Comfort':    ['Low, non-thermal photoacoustic approach','Low, picosecond minimal thermal','Low, picosecond minimal thermal','Low, picosecond minimal thermal','Minimal, low thermal damage'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–VI, 1064nm safe on darker types','I–VI, multi-wavelength','I–IV, Alexandrite limitation','I–VI, 1064nm inclusive'],
+      'Consumable Cost':               ['Low, no consumables','Low','Low','Low','Low, no consumables'],
+      'Pricing Tier':                  ['Elite','Premium (~$150K–$200K+)','Premium (~$150K–$200K+)','Mid (~$80K–$120K)','Mid (~$70K–$150K)'],
+      'Target Buyer / Practice Type':  ['High-volume tattoo removal clinic, pigmentation and melasma specialist, rejuvenation practice','Dermatology, plastics, tattoo and pigment specialists','Dermatology, plastics, multi-color tattoo specialists','Tattoo removal focused clinic, med-spa entry','Diverse market dermatology, med-spa, broad indication coverage'],
+    }
+  },
+  'sw-pqx': {
+    attrs: AESTH_ATTRS,
+    competitors: ['Cynosure PicoSure® Pro','Candela PicoWay®','Lumenis SPLENDOR X™'],
+    rows: {
+      'Modality / Wavelength':         ['Picosecond Nd:YAG 1064nm, KTP 532nm, 300ps min pulse, 2.7GW peak power, 800mJ max energy, 585nm, 650nm, 785nm forthcoming','755nm picosecond, 532nm, 1064nm','1064nm, 532nm, 785nm picosecond','755nm Alexandrite, 1064nm Nd:YAG, BLEND X®, not picosecond'],
+      'Key Indications':               ['Pigmentation disorders, multi-color tattoo removal, skin toning, scar revision, rejuvenation, FracTAT®','Tattoo removal especially blue and green, pigmentation, acne scars, skin rejuvenation','Multi-color tattoo removal, pigmentation, acne scars, rejuvenation','Hair removal, pigmentation, vascular, skin rejuvenation'],
+      'Treatment Categories Covered':  ['Pigment, tattoo, scar, rejuvenation, toning','Pigment, tattoo, skin rejuvenation','Pigment, tattoo, skin rejuvenation','Hair, skin, vascular, pigment, not a pico platform'],
+      'Downtime / Patient Comfort':    ['Minimal, photoacoustic, fastest healing','Low, picosecond minimal thermal','Low, picosecond minimal thermal','Low, cooling integrated'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','I–VI, 1064nm safe on darker types','I–VI, multi-wavelength','I–VI, dual wavelength'],
+      'Consumable Cost':               ['Low, no consumables','Low','Low','Low'],
+      'Pricing Tier':                  ['Elite','Premium (~$150K–$200K+)','Premium (~$150K–$200K+)','Premium (~$120K–$180K+)'],
+      'Target Buyer / Practice Type':  ['Advanced pigment and tattoo specialist, high-volume rejuvenation practice, clinics seeking highest pico performance','Dermatology, plastics, tattoo and pigment specialists','Dermatology, plastics, multi-color tattoo specialists','Dermatology, plastics, hair and pigment dual-wavelength focus'],
+    }
+  },
+  'starformer': {
+    attrs: ['Technology Type','Key Indications','Treatment Areas','Session Experience','Consumable Cost','Pricing Tier','Target Buyer / Practice Type'],
+    competitors: ['BTL EMSCULPT NEO®','BTL EMSELLA®','InMode EvolveX','Sofwave PureImpact VIP'],
+    rows: {
+      'Technology Type':               ['HIMS, High Intensity Magnetic Stimulation, electromagnetic, non-laser','HIFEM®, synchronized RF','HIFEM electromagnetic','Hands-free bipolar RF, EMS','Plyometric muscle activation'],
+      'Key Indications':               ['Muscle strengthening and toning, muscle re-education, atrophy prevention, blood circulation, body contouring, pelvic floor strengthening, urinary incontinence','Body contouring, muscle toning, fat reduction','Pelvic floor, incontinence, sexual wellness','Body contouring, tightening, muscle toning','Muscle toning, body contouring'],
+      'Treatment Areas':               ['Abdomen, glutes, thighs, arms, pelvic floor, therapy and rehabilitation','Abdomen, glutes, thighs, arms','Pelvic floor only','Abdomen, arms, thighs','Abdomen, arms, thighs'],
+      'Session Experience':            ['Non-invasive, no downtime, performed through clothing, high patient comfort','Non-invasive, no downtime, no clothing removal needed','Non-invasive, seated, no downtime','Non-invasive, no downtime','Non-invasive, no downtime'],
+      'Consumable Cost':               ['Low, no consumables','High, cycle cards and applicators','High, cycle cards per treatment','High, applicators','Medium, consumable per treatment'],
+      'Pricing Tier':                  ['Entry–Mid','Premium (~$150K–$200K+)','Mid (~$100K–$150K)','Mid-Premium (~$80K–$120K)','Mid-Premium (~$80K–$120K)'],
+      'Target Buyer / Practice Type':  ['Med-spa, aesthetic body contouring clinics, gynecology and women\'s health practices, wellness and functional therapy clinics','High-volume body contouring practice, med-spa','Women\'s wellness, med-spa','Body-focused med-spa, hybrid clinic','Body toning focused practice, GLP-1 complementary clinic'],
+    }
+  },
+};
+// ─── LINEUP DATA ─────────────────────────────
+const LINEUP_DATA = {
+  dental: {
+    attrs: DENTAL_ATTRS,
+    devices: ['LightWalker® STE Pro Plus II','SkyPulse®','LightWalker® II','LightWalker® MAX'],
+    rows: {
+      'Modality / Wavelength':  ['Er:YAG 2940nm','Er:YAG 2940nm, SSP, SWEEPS®, R-SWEEPS®','Er:YAG 2940nm, Nd:YAG 1064nm, ASP, QSP, SWEEPS®, R-SWEEPS®, SSP, MSP, SP, LP, VLP, SMOOTH®','Er:YAG 2940nm, Nd:YAG 1064nm, QSP, VSP, SMOOTH®, FRAC3®, PIANO®, full pulse suite'],
+      'Key Indications':        ['Soft tissue, perio, hygiene, endodontics (SWEEPS®), restorative (cavity prep)','Endo irrigation, debridement, disinfection, canal cleaning','Hard tissue, perio, endo, soft tissue, implant, NightLase®, PBM, facial aesthetics','Full dental, Fotona4D®, SmoothLase®, LipLase®, skin resurfacing, vascular, scar revision'],
+      'Hard Tissue Capability': ['True hard tissue, cavity prep, restorative','Er:YAG hard tissue capable','Full Er:YAG, enamel, dentin, caries removal','Full Er:YAG, Nd:YAG'],
+      'Anesthesia Requirement': ['Often anesthesia-free','Often anesthesia-free','Often anesthesia-free','Often anesthesia-free'],
+      'Clinical Versatility':   ['Soft and hard tissue, multi-discipline','Endo-focused compact portable','Full dual-wavelength multi-specialty dental and facial aesthetic crossover','Full multi-specialty dental and aesthetic crossover'],
+      'Consumable Cost':        ['Low','Low','Low','Low'],
+      'Pricing Tier':           ['Foundation','Foundation','Advanced (~$90K–$110K)','Elite (~$120K–$135K+)'],
+    },
+    tiers: ['Foundation','Foundation','Advanced','Elite'],
+    selectedIndex: {'lw-ste':0,'skypulse':1,'lw-ii':2,'lw-max':3}
+  },
+  aesthetics: {
+    attrs: AESTH_ATTRS,
+    devices: ['XS Dynamis','XP Dynamis','TW IntimaLaser','TW Fotona4D® Pro','SP Dynamis Pro','Dynamis MAX','SW MaQX','SW PQX'],
+    rows: {
+      'Modality / Wavelength':         ['Er:YAG 2940nm, VSP technology','Nd:YAG 1064nm','Er:YAG 2940nm (SMOOTH® and ablative), Nd:YAG (PIANO®, QCW, VERSA®)','Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP','Er:YAG 2940nm, Nd:YAG 1064nm, QCW, SMOOTH®, FRAC3®, PIANO®, VERSA, MSP, SP, LP, VLP, XLP, TURBO','Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP, TURBO','Nd:YAG 1064nm, KTP 532nm, 585nm dye, 650nm dye, 14 modalities, MaQX Q-switched, FracTAT®','Picosecond Nd:YAG 1064nm, KTP 532nm, 300ps min pulse, 2.7GW peak power, 800mJ max energy'],
+      'Key Indications':               ['Skin resurfacing, soft tissue surgery, GYN rejuvenation','Hair removal, vascular, warts, wrinkles, acne','Skin resurfacing, scar revision, pigmented lesions, skin tightening, GYN rejuvenation, vascular, pain management, PBM','Fotona4D® facial rejuvenation, Fotona4D® Men, SmoothEye®, LipLase®, VectorLift®, active acne, scar revision, vascular, rosacea, benign lesions, hair removal','Resurfacing, Fotona4D®, TightSculpting®, NightLase®, hair removal, vascular, FRAC3®, PIANO®, GYN, endovenous, laser lipolysis, scar revision, pigmented lesions, active acne, wart removal, onychomycosis','Fotona4D®, SmoothEye®, LipLase®, VectorLift®, TightSculpting®, TensorTight, NightLase®, active acne, fractional resurfacing, hair removal, pigmented and vascular lesions, scar revision, GYN, laser lipolysis, endovenous laser ablation','Tattoo removal (multi-color), melasma, pigmentation, skin toning and whitening, FracTAT® rejuvenation, vascular lesions, active acne, scar revision, hair removal','Pigmentation disorders, multi-color tattoo removal, skin toning, scar revision, rejuvenation, FracTAT®'],
+      'Treatment Categories Covered':  ['Skin, GYN','Skin, hair, vascular','Skin, GYN, vascular, therapy (pain, PBM)','Skin, hair, vascular, tightening, full facial platform','Skin, hair, vascular, GYN, surgical, body contouring, 50+ FDA cleared applications','Skin, hair, vascular, body, GYN, surgical, 100+ treatment options','Pigment, tattoo, vascular, rejuvenation, scar, hair','Pigment, tattoo, scar, rejuvenation, toning'],
+      'Downtime / Patient Comfort':    ['Low to none, often anesthesia-free','Low, often anesthesia-free','Minimal to none, often anesthesia-free, high patient comfort','Minimal, non-ablative passes comfort-only, little to no downtime','Minimal to none depending on indication','Minimal to none, CoolMist™ integrated cooling','Low, non-thermal photoacoustic','Minimal, photoacoustic, fastest healing'],
+      'Skin Type Safety':              ['All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI','All Fitzpatrick types I–VI'],
+      'Consumable Cost':               ['Low, no consumables','Low, no consumables','Low, no consumables','Low, no consumables','Low, no consumables','Low, no consumables, CoolMist™ uses water only','Low, no consumables','Low, no consumables'],
+      'Pricing Tier':                  ['Foundation','Foundation','Advanced','Advanced','Elite (~$165K–$200K)','Elite','Elite','Elite'],
+      'Target Buyer / Practice Type':  ['Dermatology, GYN, resurfacing-focused aesthetic practice','TBD — confirm internally','Dermatology, gynecology-focused practice, aesthetic clinics expanding into functional treatments','Facial aesthetics practice, rejuvenation-focused med-spa, dual-specialty clinic','Full-service dermatology, plastics, high-volume multi-specialty aesthetic practice','Premium full-service practices seeking maximum versatility and clinical range','High-volume tattoo removal clinic, pigmentation and melasma specialist, rejuvenation practice','Advanced pigment and tattoo specialist, high-volume rejuvenation practice'],
+    },
+    tiers: ['Foundation','Foundation','Advanced','Advanced','Elite','Elite','Elite','Elite'],
+    selectedIndex: {'xs-dyn':0,'xp-dyn':1,'tw-intima':2,'tw-4d':3,'sp-pro':4,'dyn-max':5,'sw-maqx':6,'sw-pqx':7}
+  }
+};
+
+// ─── STANDALONE DATA ─────────────────────────
+const STANDALONE_DATA = {
+  'lw-ste':    { tier:'Foundation', modality:'Er:YAG 2940nm', indications:'Soft tissue, perio, hygiene, endodontics (SWEEPS®), restorative (cavity prep)', hardTissue:'True hard tissue capability, cavity prep, restorative', anesthesia:'Often anesthesia-free, reduced patient friction', versatility:'Soft and hard tissue capable, multi-discipline', consumables:'Low, minimal recurring, no blades or sutures', pricing:'Foundation', bestFit:'GP entry, first laser buyers, practices adding endo and restorative workflows' },
+  'skypulse':  { tier:'Foundation', modality:'Er:YAG 2940nm, SSP, SWEEPS®, R-SWEEPS®', indications:'Endo irrigation, debridement, disinfection, canal cleaning', hardTissue:'Er:YAG hard tissue capable', anesthesia:'Reduced, often anesthesia-free', versatility:'Endo-focused, compact portable', consumables:'Low, minimal recurring', pricing:'Foundation', bestFit:'Endo-focused entry, practices adding laser-assisted endodontics' },
+  'lw-ii':     { tier:'Advanced', modality:'Er:YAG 2940nm, Nd:YAG 1064nm, ASP, QSP, SWEEPS®, R-SWEEPS®, SSP, MSP, SP, LP, VLP, SMOOTH®', indications:'Hard tissue prep, cavity prep, restorative, endodontics (SWEEPS®, R-SWEEPS®), periodontics (TwinLight® Perio), oral surgery, implantology, peri-implantitis, NightLase®, PBM, facial aesthetics (skin rejuvenation, benign lesions, vascular, hair removal)', hardTissue:'Full Er:YAG hard tissue, enamel, dentin, caries removal', anesthesia:'Reduced, often anesthesia-free for cavity prep and most soft tissue procedures', versatility:'Full dual-wavelength multi-specialty dental and facial aesthetic crossover', consumables:'Low, no consumables, tipless and tipped handpiece options', pricing:'Advanced (~$90K–$110K)', bestFit:'GP and perio, expanding clinical range, practices adding facial aesthetic revenue' },
+  'lw-max':    { tier:'Elite', modality:'Er:YAG 2940nm, Nd:YAG 1064nm, QSP, VSP, SMOOTH®, FRAC3®, PIANO®, full pulse suite', indications:'Full dental (endo, perio, implant, oral surgery, restorative, NightLase®), facial aesthetics (Fotona4D®, SmoothLase®, LipLase®, skin resurfacing, vascular, scar revision)', hardTissue:'Full Er:YAG, Nd:YAG', anesthesia:'Reduced, often anesthesia-free', versatility:'Full multi-specialty dental and aesthetic crossover, dual-wavelength platform', consumables:'Low, no consumables', pricing:'Elite (~$120K–$135K+)', bestFit:'Full-service GP, specialist, esthetic-forward practice' },
+  'xs-dyn':    { tier:'Foundation', modality:'Er:YAG 2940nm, VSP technology', indications:'Skin resurfacing, soft tissue surgery, GYN rejuvenation', categories:'Skin, GYN', downtime:'Low to none, often anesthesia-free', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Foundation', bestFit:'Dermatology, GYN, resurfacing-focused aesthetic practice' },
+  'xp-dyn':    { tier:'Foundation', modality:'Nd:YAG 1064nm', indications:'Hair removal, vascular, warts, wrinkles, acne', categories:'Skin, hair, vascular', downtime:'Low, often anesthesia-free', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Foundation', bestFit:'TBD — confirm internally' },
+  'tw-intima': { tier:'Advanced', modality:'Er:YAG 2940nm (SMOOTH® and ablative modes), Nd:YAG (PIANO®, QCW, VERSA®), dual-wavelength platform', indications:'Skin resurfacing, scar revision (C-section, episiotomy, stretch marks), pigmented lesions, skin tightening (SMOOTH® non-ablative), GYN rejuvenation, vascular treatments, pain management, PBM', categories:'Skin, GYN, vascular, therapy (pain, PBM)', downtime:'Minimal to none, SMOOTH® non-ablative treatments, often anesthesia-free, high patient comfort', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Advanced', bestFit:'Dermatology, gynecology-focused practice, aesthetic clinics expanding into functional treatments, resurfacing and tightening focused aesthetic practice' },
+  'tw-4d':     { tier:'Advanced', modality:'Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP', indications:'Fotona4D® facial rejuvenation, Fotona4D® Men, SmoothEye®, LipLase®, VectorLift®, active acne, scar revision, vascular lesions, rosacea, benign lesions, hair removal, ComfortLase®, Nd:YAG surgery', categories:'Skin, hair, vascular, tightening, full facial platform', downtime:'Minimal, non-ablative passes often comfort-only, little to no downtime', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Advanced', bestFit:'Facial aesthetics practice, rejuvenation-focused med-spa, dual-specialty clinic' },
+  'sp-pro':    { tier:'Elite', modality:'Er:YAG 2940nm, Nd:YAG 1064nm, QCW, full VSP pulse suite, SMOOTH®, FRAC3®, PIANO®, VERSA, MSP, SP, LP, VLP, XLP, TURBO', indications:'Resurfacing, Fotona4D®, TightSculpting®, NightLase®, hair removal, vascular lesions, FRAC3® rejuvenation, PIANO® deep heating, GYN, endovenous laser ablation, laser lipolysis, scar revision, pigmented lesions, active acne, wart removal, onychomycosis', categories:'Skin, hair, vascular, GYN, surgical, body contouring, 50+ FDA cleared applications', downtime:'Minimal to none depending on indication', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Elite (~$165K–$200K)', bestFit:'Full-service dermatology, plastics, high-volume multi-specialty aesthetic practice' },
+  'dyn-max':   { tier:'Elite', modality:'Er:YAG 2940nm, Nd:YAG 1064nm, SMOOTH®, FRAC3®, PIANO®, VERSA, QCW, MSP, SP, LP, VLP, XLP, TURBO', indications:'Fotona4D®, SmoothEye®, LipLase®, VectorLift®, TightSculpting®, TensorTight, NightLase®, active acne, fractional resurfacing, hair removal, pigmented and vascular lesions, scar revision, GYN, laser lipolysis, endovenous laser ablation', categories:'Skin, hair, vascular, body, GYN, surgical, 100+ treatment options', downtime:'Minimal to none, Fotona CoolMist™ integrated cooling, no consumables', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables, CoolMist™ uses water only', pricing:'Elite', bestFit:'Premium full-service practices seeking maximum versatility and clinical range' },
+  'sw-maqx':   { tier:'Elite', modality:'Nd:YAG 1064nm, KTP 532nm, 585nm dye, 650nm dye, 14 modalities across 4 wavelengths, MaQX Q-switched, FracTAT®', indications:'Tattoo removal (multi-color), melasma, pigmentation, skin toning and whitening, FracTAT® rejuvenation, vascular lesions, active acne, scar revision, hair removal', categories:'Pigment, tattoo, vascular, rejuvenation, scar, hair', downtime:'Low, non-thermal photoacoustic approach', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Elite', bestFit:'High-volume tattoo removal clinic, pigmentation and melasma specialist, rejuvenation practice' },
+  'sw-pqx':    { tier:'Elite', modality:'Picosecond Nd:YAG 1064nm, KTP 532nm, 300ps min pulse, 2.7GW peak power, 800mJ max energy, additional wavelengths 585nm, 650nm, 785nm forthcoming', indications:'Pigmentation disorders, multi-color tattoo removal, skin toning, scar revision, rejuvenation, FracTAT®', categories:'Pigment, tattoo, scar, rejuvenation, toning', downtime:'Minimal, photoacoustic, fastest healing', skinSafety:'All Fitzpatrick types I–VI', consumables:'Low, no consumables', pricing:'Elite', bestFit:'Advanced pigment and tattoo specialist, high-volume rejuvenation practice, clinics seeking highest pico performance' },
+  'starformer': { tier:'Entry-Mid', modality:'High Intensity Magnetic Stimulation (HIMS), electromagnetic muscle stimulation, non-laser', indications:'Muscle strengthening and toning, muscle re-education, prevention of muscle atrophy, increased local blood circulation, body contouring (abdomen, glutes, thighs, arms), pelvic floor strengthening, urinary incontinence treatment', categories:'Body (abdomen, glutes, thighs, arms), pelvic floor (GYN, functional), therapy and rehabilitation', downtime:'Non-invasive, no downtime, performed through clothing, high patient comfort', skinSafety:'All skin types, energy bypasses skin surface', consumables:'Low, no consumables', pricing:'Entry–Mid', bestFit:'Med-spa, aesthetic body contouring clinics, gynecology and women\'s health practices, wellness and functional therapy clinics' },
+};
+
+// ─── BULLET SORT ORDERS ──────────────────────
+const BULLET_ORDER = {
+  'dental:Modality / Wavelength': ['er:yag','nd:yag','er,cr:ysgg','diode','co₂','co2','electric','aesthetic wavelengths','full pulse suite','ssp','sweeps'],
+  'dental:Key Indications': ['soft tissue','hard tissue','perio','hygiene','endo','debridement','disinfection','canal','restorative','implant','nightlase','oral surgery','frenectomy','tots','crown','facial','hair','vascular','whitening','pbm','hemostasis','cavity','pediatric','implantology','guided surgery'],
+  'aesthetics:Modality / Wavelength': ['er:yag','nd:yag','qcw','picosecond','532nm','585nm','650nm','755nm','diode','ipl','co₂','co2','rf','bbl','smooth','frac3','piano','vsp','maqx','fractat','blend x','full pulse suite','300ps','2.7gw'],
+  'aesthetics:Key Indications': ['skin resurfacing','skin tightening','skin rejuvenation','scar','pigmented lesions','melasma','pigmentation','tattoo removal','multi-color tattoo','acne scars','active acne','rosacea','hair removal','vascular','laser lipolysis','endovenous','fractat','fotona4d','vaginal','incontinence','pelvic floor','hpv','lesions','gyn surgery','toning'],
+  'aesthetics:Treatment Categories Covered': ['skin','hair','vascular','gyn','surgical','pelvic floor','pigment','tattoo','full facial','body','lesion','non-invasive','aesthetic','broadest','toning'],
+  'aesthetics:Skin Type Safety': ['all fitzpatrick','i–vi','i–iv','i–v','all tissue','mucosal'],
+};
+
+function sortedBullets(parts, key) {
+  const order = BULLET_ORDER[key];
+  if (!order || !parts || parts.length <= 1) return parts;
+  return [...parts].sort((a,b) => {
+    const ai = order.findIndex(o => a.toLowerCase().includes(o));
+    const bi = order.findIndex(o => b.toLowerCase().includes(o));
+    return (ai===-1?999:ai) - (bi===-1?999:bi);
+  });
+}
+// ─── HELPERS ─────────────────────────────────
+const NO_BULLET_ATTRS = new Set();
+
+function splitOnComma(text) {
+  const parts=[]; let current=''; let depth=0;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='(') depth++;
+    else if(ch===')') depth--;
+    if(depth===0&&ch===','&&text[i+1]===' '){parts.push(current.trim());current='';i++;}
+    else current+=ch;
+  }
+  if(current.trim()) parts.push(current.trim());
+  return parts;
+}
+function splitOnPlus(text) {
+  const parts=[]; let current=''; let depth=0;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='(') depth++;
+    else if(ch===')') depth--;
+    if(depth===0&&ch==='+'&&text[i-1]===' '&&text[i+1]===' '){parts.push(current.trim());current='';i++;}
+    else current+=ch;
+  }
+  if(current.trim()) parts.push(current.trim());
+  return parts.length>0?parts:[text];
+}
+function splitValue(text, attr) {
+  if(!text||text==='—') return [text||'—'];
+  if(attr==='Modality / Wavelength'||attr==='Technology Type'){
+    const sp=text.split(/;\s+/);
+    if(sp.length>1){const p=[];sp.forEach(s=>p.push(...splitOnPlus(s)));return p.map(x=>x.trim()).filter(Boolean);}
+    const pp=splitOnPlus(text);
+    if(pp.length>1) return pp.map(x=>x.trim()).filter(Boolean);
+    return splitOnComma(text);
+  }
+  if(attr==='Anesthesia Requirement'){const p=text.split(/;\s+/);if(p.length>1)return p.map(x=>x.trim()).filter(Boolean);}
+  if(attr==='Clinical Versatility'){
+    const pp=splitOnPlus(text);if(pp.length>1)return pp.map(x=>x.trim()).filter(Boolean);
+    const sp=text.split(/;\s+/);if(sp.length>1)return sp.map(x=>x.trim()).filter(Boolean);
+  }
+  return splitOnComma(text);
+}
+function toSentenceCase(str) {
+  if(!str) return str;
+  return str.charAt(0).toUpperCase()+str.slice(1).toLowerCase()
+    .replace(/\ber:yag\b/gi,'Er:YAG').replace(/\bnd:yag\b/gi,'Nd:YAG').replace(/\ber,cr:ysgg\b/gi,'Er,Cr:YSGG')
+    .replace(/\bqcw\b/gi,'QCW').replace(/\bipl\b/gi,'IPL').replace(/\brf\b/gi,'RF').replace(/co₂/gi,'CO₂')
+    .replace(/\bbbl\b/gi,'BBL').replace(/\bhifem\b/gi,'HIFEM').replace(/\bems\b/gi,'EMS').replace(/\bgyn\b/gi,'GYN')
+    .replace(/ob\/gyn/gi,'OB/GYN').replace(/\bpbm\b/gi,'PBM').replace(/\btots\b/gi,'TOTS').replace(/\bvsp\b/gi,'VSP')
+    .replace(/\bssp\b/gi,'SSP').replace(/frac3®/gi,'FRAC3®').replace(/piano®/gi,'PIANO®').replace(/smooth®/gi,'SMOOTH®')
+    .replace(/fractat®/gi,'FracTAT®').replace(/\bmaqx\b/gi,'MaQX').replace(/nightlase®/gi,'NightLase®')
+    .replace(/sweeps®/gi,'SWEEPS®').replace(/r-sweeps®/gi,'R-SWEEPS®').replace(/lanap®/gi,'LANAP®')
+    .replace(/lapip™/gi,'LAPIP™').replace(/blast™/gi,'BLAST™').replace(/coolpeel®/gi,'CoolPeel®')
+    .replace(/xpl™/gi,'XPL™').replace(/blend x®/gi,'BLEND X®').replace(/fotona4d®/gi,'Fotona4D®')
+    .replace(/halo®/gi,'HALO®').replace(/n\/a/gi,'N/A').replace(/i–vi/gi,'I–VI').replace(/i–iv/gi,'I–IV')
+    .replace(/i–v/gi,'I–V').replace(/i–vii/gi,'I–VII').replace(/(\d+)nm/g,(_,n)=>n+'nm')
+    .replace(/(\d+)ps/g,(_,n)=>n+'ps').replace(/(\d+)gw/gi,(_,n)=>n+'GW').replace(/(\d+)μm/gi,(_,n)=>n+'μm')
+    .replace(/\bhims\b/gi,'HIMS');
+}
+function toBullets(text, attr, sortKey) {
+  if(!text||text==='—') return text||'—';
+  let parts=splitValue(text,attr);
+  if(sortKey) parts=sortedBullets(parts,sortKey);
+  return `<ul class="cell-bullets">${parts.map(p=>`<li>${toSentenceCase(p)}</li>`).join('')}</ul>`;
+}
+function specBullets(text) { return toBullets(text,null,null); }
+
+// ─── STATE ───────────────────────────────────
+let state = {
+  step: 0,
+  division: null,
+  pathType: null,
+  device: null,
+  deviceName: null,
+  competitorBrand: null,
+  competitorBrandName: null,
+  view: null,
+};
+const isFotonaPath = () => state.pathType === 'fotona';
+const isCompetitorPath = () => state.pathType === 'competition';
+function getStepLabels() {
+  if(state.pathType==='fotona')      return ['Division','Path','Fotona Device','View','Results'];
+  if(state.pathType==='competition') return ['Division','Path','Competitor Brand','Battlecard','Devices'];
+  return ['Division','Path','Selection','Review','Results'];
+}
+// ─── RENDER ──────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  const nav = document.getElementById('bottomNav');
+
+  if(state.step===0){
+    nav.style.display='none';
+    app.innerHTML=`
+      <div class="intro-screen">
+        <div class="intro-card fade-in">
+          <div class="intro-eyebrow">Fotona Sales Tool</div>
+          <h1 class="intro-headline">Build a competitive benchmark in seconds</h1>
+          <p class="intro-subtext">Answer a few quick questions to compare Fotona devices or review competitor brands in a structured way.</p>
+          <p class="intro-support">Use this during prep or live conversations to quickly frame the right positioning story.</p>
+          <button class="intro-cta" onclick="startBenchmark()">Start Benchmark →</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  nav.style.display='flex';
+  app.innerHTML=`
+    <div class="main-col" id="mainCol">
+      <div class="header-card" id="headerCard">
+        <div class="badge-row">
+          <span class="tool-badge">FOTONA BENCHMARK TOOL</span>
+          <span class="step-label" id="stepLabel"></span>
+          ${state.pathType ? `<span class="path-badge ${state.pathType}" id="pathBadge">${state.pathType==='fotona'?'FOTONA PATH':'COMPETITOR PATH'}</span>` : ''}
+        </div>
+        <h1 class="header-title" id="headerTitle"></h1>
+        <p class="header-subtitle" id="headerSubtitle"></p>
+        <div id="headerTip"></div>
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="content-card fade-in" id="contentCard"></div>
+    </div>
+    <div class="sidebar-col">
+      <div class="summary-card">
+        <h3>Your Benchmark Setup</h3>
+        <p class="summary-hint">Your selections will appear here as you build the benchmark.</p>
+        <div id="summaryBody"></div>
+      </div>
+    </div>`;
+
+  updateProgress();
+  updateSummary();
+  updateNav();
+
+  if(state.step===1) renderDivision();
+  else if(state.step===2) renderPathChoice();
+  else if(isFotonaPath()) {
+    if(state.step===3) renderFotonaDevice();
+    else if(state.step===4) renderFotonaView();
+    else if(state.step===5) renderFotonaResults();
+  } else if(isCompetitorPath()) {
+    if(state.step===3) renderCompetitorBrand();
+    else if(state.step===4) renderCompetitorBattlecard();
+    else if(state.step===5) renderCompetitorDevices();
+  }
+}
+
+function updateProgress() {
+  const labels = getStepLabels();
+  const el = document.getElementById('stepLabel');
+  if(el && state.step>=1) el.textContent = `Step ${state.step} of 5`;
+  const pb = document.getElementById('progressBar');
+  if(!pb) return;
+  let html = '';
+  for(let i=0;i<labels.length;i++){
+    const snum = i+1;
+    const isDone   = snum < state.step;
+    const isActive = snum === state.step;
+    const cls = isDone?'done':isActive?'active':'';
+    const nameCls = isDone?'done':isActive?'active':'';
+    html += `<div class="progress-step">
+      <div class="step-circle ${cls}">${isDone?'✓':snum}</div>
+      <div class="step-name ${nameCls}">${labels[i]}</div>
+    </div>`;
+    if(i<labels.length-1) html+=`<div class="progress-connector ${isDone||isActive&&snum<state.step?'active':''}"></div>`;
+  }
+  pb.innerHTML = html;
+  // Fix connector active state
+  const connectors = pb.querySelectorAll('.progress-connector');
+  connectors.forEach((c,i)=>{ if(i<state.step-1) c.classList.add('active'); });
+}
+
+function updateSummary() {
+  const body = document.getElementById('summaryBody');
+  if(!body) return;
+  if(!state.division){ body.innerHTML='<p class="summary-empty">Your selections will appear here as you build the benchmark.</p>'; return; }
+  let html='';
+  html+=`<div class="summary-item"><div class="s-label">Division</div><div class="s-value">${state.division==='dental'?'Dental':'Aesthetics'}</div></div>`;
+  if(state.pathType){
+    html+=`<div class="summary-divider"></div>`;
+    html+=`<div class="summary-item"><div class="s-label">Path</div><div class="s-value">${state.pathType==='fotona'?'Fotona':'Competition'}</div></div>`;
+  }
+  if(isFotonaPath()&&state.deviceName){
+    const sd=STANDALONE_DATA[state.device];
+    html+=`<div class="summary-divider"></div>`;
+    html+=`<div class="summary-item"><div class="s-label">Fotona Device</div><div class="s-value">${state.deviceName}</div></div>`;
+    if(sd) html+=`<div class="summary-item"><div class="s-label">Tier</div><div class="s-value">${sd.tier}</div></div>`;
+    if(state.view){
+      const v=VIEWS.find(x=>x.id===state.view);
+      html+=`<div class="summary-item"><div class="s-label">View</div><div class="s-value">${v?v.name:''}</div></div>`;
+    }
+  }
+  if(isCompetitorPath()&&state.competitorBrandName){
+    html+=`<div class="summary-divider"></div>`;
+    html+=`<div class="summary-item"><div class="s-label">Competitor Brand</div><div class="s-value">${state.competitorBrandName}</div></div>`;
+    const bc=COMPETITOR_BATTLECARDS[state.competitorBrand];
+    if(bc&&state.step>=4){
+      html+=`<div class="summary-highlight"><div class="s-label">Best Fotona Device to Position Against</div><div class="s-value">${bc.bestFotona}</div></div>`;
+    }
+  }
+  body.innerHTML=html;
+}
+
+function updateNav() {
+  const btnBack=document.getElementById('btnBack');
+  const btnNext=document.getElementById('btnNext');
+  if(!btnBack||!btnNext) return;
+  btnBack.className='btn-back'+(state.step<=1?' disabled':'');
+
+  if(isFotonaPath()&&state.step===5){
+    btnNext.textContent='↺ Start Over'; btnNext.className='btn-next ready'; return;
+  }
+  if(isCompetitorPath()&&state.step===5){
+    btnNext.textContent='↺ Start Over'; btnNext.className='btn-next ready'; return;
+  }
+  btnNext.textContent='Next →';
+  const canAdvance=(state.step===1&&state.division)||
+    (state.step===2&&state.pathType)||
+    (isFotonaPath()&&state.step===3&&state.device)||
+    (isFotonaPath()&&state.step===4&&state.view)||
+    (isCompetitorPath()&&state.step===3&&state.competitorBrand)||
+    (isCompetitorPath()&&state.step===4)||
+    false;
+  btnNext.className='btn-next'+(canAdvance?' ready':' disabled');
+}
+
+// ─── STEP RENDERERS ──────────────────────────
+function setHeader(title, subtitle, tip='') {
+  const ht=document.getElementById('headerTitle');
+  const hs=document.getElementById('headerSubtitle');
+  const htip=document.getElementById('headerTip');
+  if(ht) ht.textContent=title;
+  if(hs) hs.textContent=subtitle;
+  if(htip) htip.innerHTML=tip?`<p class="header-tip">${tip}</p>`:'';
+}
+
+function renderDivision() {
+  setHeader('First, choose a division.','Select the area of care most relevant to this conversation.','This determines which Fotona devices and competitors are shown.');
+  document.getElementById('contentCard').innerHTML=`
+    <h2>Which division?</h2>
+    <p class="card-sub">Choose the area of care that applies to this practice.</p>
+    <div class="selection-grid cols-2" style="margin-top:18px">
+      <div class="sel-card ${state.division==='dental'?'selected':''}" onclick="select('division','dental')">
+        <div class="card-title">Dental</div>
+        <div class="card-desc">Dental practices across GP, specialist, and surgical pathways.</div>
+      </div>
+      <div class="sel-card ${state.division==='aesthetics'?'selected':''}" onclick="select('division','aesthetics')">
+        <div class="card-title">Aesthetics</div>
+        <div class="card-desc">Facial, body, and skin-focused clinics and medspas.</div>
+      </div>
+    </div>`;
+}
+
+function renderPathChoice() {
+  setHeader('What are you benchmarking?','Choose whether to position a Fotona device or evaluate a competitor brand.','This choice determines the rest of the workflow.');
+  document.getElementById('contentCard').innerHTML=`
+    <h2>Select a path.</h2>
+    <p class="card-sub">Choose how you want to use this tool in this conversation.</p>
+    <div class="selection-grid cols-2" style="margin-top:18px">
+      <div class="sel-card ${state.pathType==='fotona'?'selected':''}" onclick="select('pathType','fotona')">
+        <div class="card-title">Fotona</div>
+        <div class="card-desc">Benchmark a Fotona device against the market or within the Fotona lineup.</div>
+      </div>
+      <div class="sel-card ${state.pathType==='competition'?'selected':''}" onclick="select('pathType','competition')">
+        <div class="card-title">Competition</div>
+        <div class="card-desc">Review a competitor brand, understand their weaknesses, and identify which Fotona device to position against them.</div>
+      </div>
+    </div>`;
+}
+
+function renderFotonaDevice() {
+  setHeader('Now select a Fotona device.','Choose the device you want to benchmark in this conversation.','Select the device most relevant to the practice you\'re speaking with.');
+  const devices=state.division==='dental'?DENTAL_DEVICES:AESTH_DEVICES;
+  let html='';
+  ['Foundation','Advanced','Elite','Entry-Mid'].forEach(tier=>{
+    const inTier=devices.filter(d=>d.tier===tier);
+    if(!inTier.length) return;
+    html+=`<div class="section-label" style="margin-top:${html?'20px':'0'}">${tier}</div><div class="selection-grid cols-auto">`;
+    inTier.forEach(d=>{
+      html+=`<div class="sel-card ${state.device===d.id?'selected':''}" onclick="selectDevice('${d.id}','${d.name.replace(/'/g,"\\'")}')">
+        <span class="card-badge badge-${tier.toLowerCase().replace(/[^a-z]/g,'-')}">${tier}</span>
+        <div class="card-title">${d.name}</div>
+        <div class="card-desc">${d.desc}</div>
+        <div class="card-meta">${d.modality}</div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('contentCard').innerHTML=`<h2>Select a Fotona device.</h2><p class="card-sub">Choose the device for this benchmark.</p><div style="margin-top:16px">${html}</div>`;
+}
+
+function renderFotonaView() {
+  setHeader('Choose your view.','Select how you want to compare this device in this conversation.','');
+  const availableViews = state.device==='starformer'
+    ? VIEWS.filter(v=>v.id!=='vs-lineup')
+    : VIEWS;
+  let html=`<div class="selection-grid cols-auto" style="margin-top:4px">`;
+  availableViews.forEach(v=>{
+    html+=`<div class="sel-card ${state.view===v.id?'selected':''}" onclick="select('view','${v.id}')">
+      <div class="view-icon">${v.icon}</div>
+      <div class="card-title">${v.name}</div>
+      <div class="card-desc">${v.desc}</div>
+      <div class="card-use">${v.use}</div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('contentCard').innerHTML=`<h2>Select a view.</h2><p class="card-sub">Choose how you want to benchmark <strong style="color:#fff">${state.deviceName}</strong>.</p><div style="margin-top:16px">${html}</div>`;
+}
+
+function renderFotonaResults() {
+  const viewName=VIEWS.find(v=>v.id===state.view)?.name||'';
+  setHeader(state.deviceName, viewName);
+  const resultHeader=`
+    <div class="result-header">
+      <div class="result-header-icon">✅</div>
+      <div class="result-header-text">
+        <h3>Your benchmark is ready</h3>
+        <p>Use this view to support the conversation and reinforce where Fotona wins.</p>
+        <div class="result-meta">
+          <span>${state.deviceName}</span>
+          <span>${viewName}</span>
+          <span>${state.division==='dental'?'Dental':'Aesthetics'}</span>
+        </div>
+      </div>
+    </div>`;
+
+  if(state.view==='standalone') renderStandalone(resultHeader);
+  else if(state.view==='vs-comp') renderVsComp(resultHeader);
+  else if(state.view==='vs-lineup') renderVsLineup(resultHeader);
+}
+
+function renderStandalone(headerHtml='') {
+  const d=STANDALONE_DATA[state.device];
+  if(!d){document.getElementById('contentCard').innerHTML=headerHtml+'<p>No data.</p>';return;}
+  const tierClass=d.tier.toLowerCase().replace(/[^a-z]/g,'-');
+  const isDental=state.division==='dental';
+  const dentalFields=`
+    <div class="spec-item"><div class="spec-label">Hard Tissue Capability</div><div class="spec-value">${specBullets(d.hardTissue||'—')}</div></div>
+    <div class="spec-item"><div class="spec-label">Anesthesia Requirement</div><div class="spec-value">${specBullets(d.anesthesia||'—')}</div></div>
+    <div class="spec-item full-width"><div class="spec-label">Clinical Versatility</div><div class="spec-value">${specBullets(d.versatility||'—')}</div></div>`;
+  const aesthFields=`
+    <div class="spec-item full-width"><div class="spec-label">Treatment Categories Covered</div><div class="spec-value">${specBullets(d.categories||'—')}</div></div>
+    <div class="spec-item"><div class="spec-label">Downtime / Patient Comfort</div><div class="spec-value">${specBullets(d.downtime||'—')}</div></div>
+    <div class="spec-item"><div class="spec-label">Skin Type Safety</div><div class="spec-value">${specBullets(d.skinSafety||'—')}</div></div>`;
+  document.getElementById('contentCard').innerHTML=`${headerHtml}
+    <div class="spec-grid">
+      <div class="spec-item"><div class="spec-label">Tier</div><div class="spec-value"><span class="card-badge badge-${tierClass}">${d.tier}</span></div></div>
+      <div class="spec-item"><div class="spec-label">Pricing</div><div class="spec-value">${specBullets(d.pricing)}</div></div>
+      <div class="spec-item full-width"><div class="spec-label">Modality / Wavelength</div><div class="spec-value">${specBullets(d.modality)}</div></div>
+      <div class="spec-item full-width"><div class="spec-label">Key Indications</div><div class="spec-value">${specBullets(d.indications)}</div></div>
+      ${isDental?dentalFields:aesthFields}
+      <div class="spec-item full-width"><div class="spec-label">Consumable Cost</div><div class="spec-value">${specBullets(d.consumables)}</div></div>
+      <div class="best-fit-box"><div class="spec-label">Best Fit Practice</div><div class="spec-value">${specBullets(d.bestFit)}</div></div>
+    </div>`;
+}
+
+function renderVsComp(headerHtml='') {
+  const data=COMP_DATA[state.device];
+  if(!data){document.getElementById('contentCard').innerHTML=headerHtml+'<p>No data.</p>';return;}
+  const allCols=[state.deviceName,...data.competitors];
+  let thead=`<tr><th style="min-width:130px">Attribute</th>`;
+  allCols.forEach((c,i)=>thead+=i===0?`<th class="fotona-th">${c}</th>`:`<th>${c}</th>`);
+  thead+='</tr>';
+  const attrs=data.attrs||DENTAL_ATTRS;
+  let tbody='';
+  attrs.forEach(attr=>{
+    const vals=data.rows[attr]||[];
+    const sk=state.division+':'+attr;
+    tbody+=`<tr><td class="attr-label">${attr}</td>`;
+    allCols.forEach((_,i)=>{
+      const c=toBullets(vals[i]||'—',attr,sk);
+      tbody+=i===0?`<td class="fotona-td">${c}</td>`:`<td>${c}</td>`;
+    });
+    tbody+='</tr>';
+  });
+  document.getElementById('contentCard').innerHTML=`${headerHtml}
+    <p class="card-sub" style="margin-bottom:14px">${state.deviceName} vs. Competition — Fotona column highlighted. Scroll horizontally on smaller screens.</p>
+    <div class="table-wrap"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+function renderVsLineup(headerHtml='') {
+  const ld=LINEUP_DATA[state.division];
+  if(!ld){document.getElementById('contentCard').innerHTML=headerHtml+'<p>No data.</p>';return;}
+  const selIdx=ld.selectedIndex[state.device];
+  let thead=`<tr><th style="min-width:130px">Attribute</th>`;
+  ld.devices.forEach((name,i)=>thead+=i===selIdx?`<th class="fotona-th">${name}</th>`:`<th>${name}</th>`);
+  thead+='</tr>';
+  let tbody=`<tr><td class="attr-label">Tier</td>`;
+  ld.tiers.forEach((t,i)=>{
+    const cell=`<span class="card-badge badge-${t.toLowerCase()}">${t}</span>`;
+    tbody+=i===selIdx?`<td class="fotona-td">${cell}</td>`:`<td>${cell}</td>`;
+  });
+  tbody+='</tr>';
+  ld.attrs.forEach(attr=>{
+    const vals=ld.rows[attr]||[];
+    const sk=state.division+':'+attr;
+    tbody+=`<tr><td class="attr-label">${attr}</td>`;
+    ld.devices.forEach((_,i)=>{
+      const c=toBullets(vals[i]||'—',attr,sk);
+      tbody+=i===selIdx?`<td class="fotona-td">${c}</td>`:`<td>${c}</td>`;
+    });
+    tbody+='</tr>';
+  });
+  document.getElementById('contentCard').innerHTML=`${headerHtml}
+    <p class="card-sub" style="margin-bottom:14px">${state.deviceName} highlighted within the Fotona lineup. Scroll horizontally to see all models.</p>
+    <div class="table-wrap"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+// ─── COMPETITOR PATH RENDERERS ───────────────
+function renderCompetitorBrand() {
+  setHeader('Select a competitor brand.','Choose the brand you want to review and position against.','Only brands relevant to the '+( state.division==='dental'?'Dental':'Aesthetics')+' division are shown.');
+  const brands=state.division==='dental'?DENTAL_COMPETITORS:AESTH_COMPETITORS;
+  let html=`<div class="selection-grid cols-auto" style="margin-top:4px">`;
+  brands.forEach(b=>{
+    html+=`<div class="sel-card ${state.competitorBrand===b.id?'selected':''}" onclick="selectBrand('${b.id}','${b.name.replace(/'/g,"\\'")}')">
+      <div class="card-title">${b.name}</div>
+      <div class="card-desc">${b.desc}</div>
+      <div class="card-meta">${b.modality}</div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('contentCard').innerHTML=`<h2>Select a competitor brand.</h2><p class="card-sub">Choose the brand most relevant to this conversation.</p><div style="margin-top:16px">${html}</div>`;
+}
+
+function renderCompetitorBattlecard() {
+  setHeader('Competitor Battlecard','Use this summary to understand where the brand is strong, where it is vulnerable, and which Fotona device to position against it.');
+  const bc=COMPETITOR_BATTLECARDS[state.competitorBrand];
+  if(!bc){document.getElementById('contentCard').innerHTML='<p>No battlecard data.</p>';return;}
+  const resultHeader=`
+    <div class="result-header">
+      <div class="result-header-icon">🎯</div>
+      <div class="result-header-text">
+        <h3>Competitor battlecard</h3>
+        <p>Use this summary to understand where ${state.competitorBrandName} is strong, where it is vulnerable, and which Fotona device to position against it.</p>
+      </div>
+    </div>`;
+  const rows=[
+    {label:'Modality / Wavelength',val:bc.modality,cls:''},
+    {label:'Key Indications',val:bc.indications,cls:''},
+    {label:'Treatment Categories',val:bc.categories,cls:''},
+    {label:'Pricing Tier',val:bc.pricing,cls:''},
+    {label:'Target Buyer',val:bc.targetBuyer,cls:''},
+    {label:'Key Weakness vs Fotona',val:bc.weakness,cls:'highlight'},
+    {label:'Best Fotona Device to Position Against',val:bc.bestFotona,cls:'fotona-rec'},
+  ];
+  let html=`<div class="battlecard">`;
+  rows.forEach(r=>{
+    html+=`<div class="battlecard-row ${r.cls}">
+      <div class="battlecard-label">${r.label}</div>
+      <div class="battlecard-value">${specBullets(r.val)}</div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('contentCard').innerHTML=resultHeader+html;
+}
+
+function renderCompetitorDevices() {
+  setHeader('Competitor Device Overview','Review this brand\'s device lineup and specifications in one place.');
+  const data=COMPETITOR_DEVICES[state.competitorBrand];
+  if(!data){document.getElementById('contentCard').innerHTML='<p>No device data available for this competitor.</p>';return;}
+  const resultHeader=`
+    <div class="result-header">
+      <div class="result-header-icon">📋</div>
+      <div class="result-header-text">
+        <h3>Competitor device overview</h3>
+        <p>Review ${state.competitorBrandName}'s full device lineup and specifications in one place.</p>
+        <div class="result-meta"><span>${state.competitorBrandName}</span><span>${state.division==='dental'?'Dental':'Aesthetics'}</span></div>
+      </div>
+    </div>`;
+  let thead=`<tr><th style="min-width:130px">Attribute</th>`;
+  data.devices.forEach(name=>thead+=`<th>${name}</th>`);
+  thead+='</tr>';
+  let tbody='';
+  data.attrs.forEach(attr=>{
+    const vals=data.rows[attr]||[];
+    const sk=state.division+':'+attr;
+    tbody+=`<tr><td class="attr-label">${attr}</td>`;
+    data.devices.forEach((_,i)=>{
+      tbody+=`<td>${toBullets(vals[i]||'—',attr,sk)}</td>`;
+    });
+    tbody+='</tr>';
+  });
+  document.getElementById('contentCard').innerHTML=`${resultHeader}
+    <p class="card-sub" style="margin-bottom:14px">Scroll horizontally to view all devices.</p>
+    <div class="table-wrap"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+// ─── SELECTION HELPERS ───────────────────────
+function startBenchmark(){ state.step=1; render(); }
+function select(field, val) {
+  if(field==='division'&&state.division!==val){ state.division=val; state.pathType=null; state.device=null; state.deviceName=null; state.competitorBrand=null; state.competitorBrandName=null; state.view=null; }
+  else if(field==='pathType'&&state.pathType!==val){ state.pathType=val; state.device=null; state.deviceName=null; state.competitorBrand=null; state.competitorBrandName=null; state.view=null; }
+  else if(field==='view'){ state.view=null; state.view=val; }
+  else state[field]=val;
+  render();
+}
+function selectDevice(id, name){ state.device=id; state.deviceName=name; state.view=null; render(); }
+function selectBrand(id, name){ state.competitorBrand=id; state.competitorBrandName=name; render(); }
+
+// ─── NAVIGATION ──────────────────────────────
+function goNext() {
+  if((isFotonaPath()&&state.step===5)||(isCompetitorPath()&&state.step===5)){
+    state={step:0,division:null,pathType:null,device:null,deviceName:null,competitorBrand:null,competitorBrandName:null,view:null};
+    render(); return;
+  }
+  const canAdvance=(state.step===1&&state.division)||(state.step===2&&state.pathType)||
+    (isFotonaPath()&&state.step===3&&state.device)||(isFotonaPath()&&state.step===4&&state.view)||
+    (isCompetitorPath()&&state.step===3&&state.competitorBrand)||(isCompetitorPath()&&state.step===4);
+  if(!canAdvance) return;
+  state.step++;
+  render();
+}
+function goBack() {
+  if(state.step<=1){ state.step=0; render(); return; }
+  state.step--;
+  if(state.step===4&&isFotonaPath()) state.view=null;
+  if(state.step===3&&isFotonaPath()){ state.device=null; state.deviceName=null; state.view=null; }
+  if(state.step===4&&isCompetitorPath()) { /* stay on battlecard, no clear needed */ }
+  if(state.step===3&&isCompetitorPath()){ state.competitorBrand=null; state.competitorBrandName=null; }
+  if(state.step===2){ state.pathType=null; state.device=null; state.deviceName=null; state.competitorBrand=null; state.competitorBrandName=null; state.view=null; }
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
